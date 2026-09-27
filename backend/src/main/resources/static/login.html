@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log in - TerraVision</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="auth-shell">
+    <a href="index.html" class="brand">TerraVision</a>
+
+    <div class="auth-card">
+        <div class="auth-icon-row">
+            <span class="icon-badge"><span id="headerIcon"></span></span>
+        </div>
+        <h1 id="heading">Log in</h1>
+        <p class="subtitle" id="subtitle">Access your classification history and account.</p>
+
+        <div id="errorAlert" class="alert alert-error" style="display:none;"></div>
+
+        <form id="loginForm">
+            <div class="form-field">
+                <label for="email">Email</label>
+                <div class="input-icon-wrapper">
+                    <span class="input-icon-left" id="mailIcon"></span>
+                    <input type="email" id="email" required autocomplete="email">
+                </div>
+            </div>
+            <div class="form-field">
+                <label for="password">Password</label>
+                <div class="input-icon-wrapper has-toggle">
+                    <span class="input-icon-left" id="lockIcon"></span>
+                    <input type="password" id="password" required autocomplete="current-password">
+                    <button type="button" class="input-icon-toggle" id="togglePassword" aria-label="Show password">
+                        <span id="toggleIcon"></span>
+                    </button>
+                </div>
+            </div>
+            <button type="submit" class="btn-primary" id="submitBtn">Log in</button>
+        </form>
+
+        <p class="switch-link">Don't have an account? <a href="register.html">Register</a></p>
+    </div>
+</div>
+
+<script src="js/icons.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script>
+    redirectIfAlreadyLoggedIn();
+
+    document.getElementById('mailIcon').innerHTML = ICONS.mail;
+    document.getElementById('lockIcon').innerHTML = ICONS.lock;
+
+    // Cosmetic-only framing from the landing page's two buttons: same form, same
+    // endpoint, same request either way. Actual role always comes from the server's
+    // JWT after login, never from which button got you here -- see index.html and
+    // ARCHITECTURE.md for why this is safe to do purely as UI framing.
+    const params = new URLSearchParams(window.location.search);
+    const isAdminIntent = params.get('intent') === 'admin';
+    if (isAdminIntent) {
+        document.getElementById('headerIcon').innerHTML = ICONS.shield;
+        document.getElementById('heading').textContent = 'Admin sign-in';
+        document.getElementById('subtitle').textContent = 'Sign in with an administrator account.';
+    } else {
+        document.getElementById('headerIcon').innerHTML = ICONS.lock;
+    }
+
+    const passwordInput = document.getElementById('password');
+    const toggleBtn = document.getElementById('togglePassword');
+    const toggleIcon = document.getElementById('toggleIcon');
+    toggleIcon.innerHTML = ICONS.eye;
+
+    toggleBtn.addEventListener('click', () => {
+        const showing = passwordInput.type === 'text';
+        passwordInput.type = showing ? 'password' : 'text';
+        toggleIcon.innerHTML = showing ? ICONS.eye : ICONS.eyeOff;
+        toggleBtn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+    });
+
+    const form = document.getElementById('loginForm');
+    const errorAlert = document.getElementById('errorAlert');
+    const submitBtn = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errorAlert.style.display = 'none';
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Logging in...';
+
+        const email = document.getElementById('email').value.trim();
+        const password = passwordInput.value;
+
+        try {
+            // Identical call regardless of intent=admin/user -- the server is the
+            // only source of truth for role.
+            const result = await apiFetch('/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
+            saveSession(result.token, result.email, result.role, result.expiresInSeconds);
+            window.location.href = 'classify.html';
+        } catch (err) {
+            let extra = '';
+            if (err.status === 403) {
+                const resendUrl = `verify-pending.html?email=${encodeURIComponent(email)}`;
+                extra = ` <a href="${resendUrl}">Resend verification email</a>`;
+            }
+            errorAlert.innerHTML = `<span style="width:18px;height:18px;display:inline-flex;">${ICONS.xCircle}</span><span>${err.message}.${extra}</span>`;
+            errorAlert.style.display = 'flex';
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Log in';
+        }
+    });
+</script>
+</body>
+</html>

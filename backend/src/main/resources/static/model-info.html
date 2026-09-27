@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Info - TerraVision</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="topbar"></div>
+
+<div class="page" style="max-width:800px;">
+    <div class="page-header">
+        <h1>Model information</h1>
+        <p>Architecture, dataset, training summary, and known limitations.</p>
+    </div>
+
+    <div class="content-card">
+        <h2>Architecture</h2>
+        <p>ResNet50 (50-layer deep convolutional neural network), pretrained on ImageNet and fine-tuned via
+            two-phase transfer learning: first the final classification layer only, then the full network at a
+            lower learning rate. The final layer is replaced with a 10-way linear classifier matching EuroSAT's
+            classes. For serving, the trained PyTorch model is exported once to TorchScript and executed inside
+            the Java backend via Deep Java Library's PyTorch engine -- no Python process runs in production.</p>
+        <img class="arch-image" src="images/lulc_architecture.png" alt="Model architecture and pipeline diagram">
+    </div>
+
+    <div class="content-card">
+        <h2>Dataset</h2>
+        <p>EuroSAT -- 27,000 labeled Sentinel-2 satellite image patches across 10 land-use/land-cover classes
+            (AnnualCrop, Forest, HerbaceousVegetation, Highway, Industrial, Pasture, PermanentCrop, Residential,
+            River, SeaLake). Each source patch is 64x64 pixels at 10 m ground resolution.</p>
+    </div>
+
+    <div class="content-card">
+        <h2>Training metrics</h2>
+        <div class="stats-row" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="stat-card"><span class="stat-number">97.85%</span><span class="stat-label">Test accuracy</span></div>
+            <div class="stat-card"><span class="stat-number">10</span><span class="stat-label">Classes</span></div>
+            <div class="stat-card"><span class="stat-number">27,000</span><span class="stat-label">Training images</span></div>
+        </div>
+        <p style="margin-top:16px;">Full training run, per-class precision/recall, and the confusion matrix are in
+            <code>notebooks/LULC_Part1_Image_Classification.ipynb</code> in the project repository.</p>
+    </div>
+
+    <div class="content-card">
+        <h2>Known limitations</h2>
+        <div class="limitation-box">
+            <p><strong>Domain shift is real and expected.</strong> This model was trained exclusively on Sentinel-2
+                satellite tiles -- top-down, 10 m/pixel, atmospherically-corrected multispectral imagery reduced to
+                RGB. It was never shown ground-level photos, drone footage, aerial photography at different
+                resolutions, or imagery from other sensors.</p>
+            <p>Uploading anything outside that distribution (a phone photo, a screenshot, a different satellite's
+                imagery) will typically produce a low top-1 probability spread across several classes. Rather than
+                hide this, the API flags any prediction below a configurable confidence threshold as
+                <code>lowConfidence: true</code> with an explicit warning message, both in the JSON response and
+                in the UI.</p>
+            <p>Other known constraints: the model classifies a whole tile as one class (no per-pixel segmentation
+                or object detection), input images are resized/letterboxed to 224x224 which can lose fine detail
+                on very large images, and performance on land-cover types outside Europe (where EuroSAT was
+                collected) has not been separately validated.</p>
+        </div>
+    </div>
+</div>
+
+<footer>TerraVision - Spring Boot + DJL + PostgreSQL, serving a ResNet50 model trained on EuroSAT (Sentinel-2)</footer>
+
+<script src="js/icons.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script>
+    requireAuth();
+    renderNav('model-info');
+</script>
+</body>
+</html>

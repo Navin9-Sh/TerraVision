@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check your email - TerraVision</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="auth-shell">
+    <a href="index.html" class="brand">TerraVision</a>
+
+    <div class="auth-card" style="text-align:center;">
+        <div class="auth-icon-row">
+            <span class="icon-badge"><span id="mailIcon"></span></span>
+        </div>
+        <h1>Check your email</h1>
+        <p class="subtitle" id="pendingText">We sent a verification link to your email address.</p>
+
+        <div id="resultAlert" class="alert" style="display:none;"></div>
+
+        <button type="button" class="btn-secondary" id="resendBtn" style="width:100%;justify-content:center;">
+            Resend verification email
+        </button>
+
+        <p class="switch-link">Already verified? <a href="login.html">Log in</a></p>
+    </div>
+</div>
+
+<script src="js/icons.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script>
+    document.getElementById('mailIcon').innerHTML = ICONS.mail;
+
+    const params = new URLSearchParams(window.location.search);
+    const email = params.get('email') || '';
+    if (email) {
+        document.getElementById('pendingText').textContent =
+            `We sent a verification link to ${email}. Click it to activate your account.`;
+    }
+
+    const resendBtn = document.getElementById('resendBtn');
+    const resultAlert = document.getElementById('resultAlert');
+
+    resendBtn.addEventListener('click', async () => {
+        if (!email) {
+            resultAlert.className = 'alert alert-error';
+            resultAlert.innerHTML = `<span style="width:18px;height:18px;display:inline-flex;">${ICONS.xCircle}</span><span>No email address to resend to -- go back to the register page.</span>`;
+            resultAlert.style.display = 'flex';
+            return;
+        }
+
+        resendBtn.disabled = true;
+        resendBtn.textContent = 'Sending...';
+
+        try {
+            await apiFetch('/auth/resend-verification', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email }),
+            });
+            resultAlert.className = 'alert alert-success';
+            resultAlert.innerHTML = `<span style="width:18px;height:18px;display:inline-flex;">${ICONS.checkCircle}</span><span>Verification email sent again.</span>`;
+            resultAlert.style.display = 'flex';
+        } catch (err) {
+            resultAlert.className = 'alert alert-error';
+            resultAlert.innerHTML = `<span style="width:18px;height:18px;display:inline-flex;">${ICONS.xCircle}</span><span>${err.message}</span>`;
+            resultAlert.style.display = 'flex';
+        }
+
+        resendBtn.disabled = false;
+        resendBtn.textContent = 'Resend verification email';
+    });
+</script>
+</body>
+</html>

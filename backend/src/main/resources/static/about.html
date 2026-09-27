@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - TerraVision</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="topbar"></div>
+
+<div class="page" style="max-width:800px;">
+    <div class="page-header">
+        <h1>About</h1>
+        <p>Land-use and land-cover classification using deep learning and Sentinel-2 satellite imagery.</p>
+    </div>
+
+    <div class="content-card">
+        <h2>What is this project?</h2>
+        <p>TerraVision classifies satellite images into 10 land-use and land-cover categories using a ResNet50
+            model trained on the EuroSAT dataset -- 27,000 Sentinel-2 satellite images from across Europe. This
+            version is a full rebuild of an earlier Flask prototype into a production-shaped stack: Spring Boot
+            for the API, PostgreSQL for prediction history and user accounts, and Deep Java Library for running
+            the trained model natively inside the JVM.</p>
+    </div>
+
+    <div class="content-card">
+        <h2>What is EuroSAT?</h2>
+        <p>EuroSAT is a benchmark dataset based on Sentinel-2 satellite imagery covering 10 land-use classes.
+            Each image is a 64x64 pixel patch captured at 10-meter resolution. The dataset contains 27,000
+            labeled images used to train the classification model.</p>
+    </div>
+
+    <div class="content-card">
+        <h2>How does the model work?</h2>
+        <p>ResNet50 -- a 50-layer deep convolutional neural network pretrained on ImageNet -- was fine-tuned in
+            two phases: first training only the final layers, then the entire network. This achieved 97.85% test
+            accuracy on the EuroSAT dataset. See the Model Info page for the full architecture, dataset, and
+            limitations writeup.</p>
+    </div>
+
+    <div class="content-card">
+        <h2>Why Spring Boot + DJL instead of Python?</h2>
+        <p>The goal of this rebuild was an end-to-end JVM-native system: Java handles the HTTP API, persistence,
+            authentication, and -- via Deep Java Library's PyTorch engine -- the model inference itself, loading
+            a TorchScript export of the trained model directly into the JVM process. Python's only role is a
+            one-time, offline export script; it never runs as part of the live application. The full reasoning
+            is in <code>ARCHITECTURE.md</code> in the project repository.</p>
+    </div>
+
+    <div class="content-card">
+        <h2>Project pipeline</h2>
+        <div class="pipeline">
+            <div class="pipe-step">EuroSAT dataset<br><small>27,000 images</small></div>
+            <div class="pipe-arrow">&rarr;</div>
+            <div class="pipe-step">ResNet50 training<br><small>97.85% accuracy</small></div>
+            <div class="pipe-arrow">&rarr;</div>
+            <div class="pipe-step">TorchScript export<br><small>one-time, offline</small></div>
+            <div class="pipe-arrow">&rarr;</div>
+            <div class="pipe-step">Spring Boot + DJL<br><small>JVM-native inference</small></div>
+        </div>
+    </div>
+</div>
+
+<footer>TerraVision - Spring Boot + DJL + PostgreSQL, serving a ResNet50 model trained on EuroSAT (Sentinel-2)</footer>
+
+<script src="js/icons.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script>
+    requireAuth();
+    renderNav('about');
+</script>
+</body>
+</html>

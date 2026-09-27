@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TerraVision</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="auth-shell">
+    <span class="brand" style="margin-bottom:8px;">TerraVision</span>
+    <p style="color:var(--color-ink-muted); font-size:0.9rem; margin-bottom:28px; text-align:center;">
+        Satellite land-use classification. Sign in to continue.
+    </p>
+
+    <div class="auth-card" style="text-align:center;">
+        <div style="display:flex; flex-direction:column; gap:12px;">
+            <a href="login.html" class="btn-primary" style="text-decoration:none;">
+                <span style="width:18px;height:18px;display:inline-flex;" id="userLoginIcon"></span>
+                User Login
+            </a>
+            <a href="login.html?intent=admin" class="btn-secondary" style="width:100%; text-decoration:none;">
+                <span style="width:16px;height:16px;display:inline-flex;" id="adminLoginIcon"></span>
+                Admin Login
+            </a>
+        </div>
+
+        <p class="switch-link">Don't have an account? <a href="register.html">Register</a></p>
+    </div>
+</div>
+
+<script src="js/icons.js"></script>
+<script src="js/auth.js"></script>
+<script>
+    // Both buttons above go to the exact same login form and the exact same
+    // POST /api/v1/auth/login call -- "Admin Login" only changes the login page's
+    // heading/icon (cosmetic, via ?intent=admin). Role is determined solely by the
+    // server from the JWT it issues; logging in with a non-admin account via
+    // "Admin Login" just logs you in as a regular user, same as clicking
+    // "User Login" would have.
+    redirectIfAlreadyLoggedIn();
+    document.getElementById('userLoginIcon').innerHTML = ICONS.user;
+    document.getElementById('adminLoginIcon').innerHTML = ICONS.shield;
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "AnnualCrop": {"description": "Agricultural land used for annual crops like wheat, corn or rice.", "emoji": "🌾"},
+  "Forest": {"description": "Dense tree cover -- natural or planted forest areas.", "emoji": "🌲"},
+  "HerbaceousVegetation": {"description": "Low-lying vegetation like grasslands and shrubs.", "emoji": "🌿"},
+  "Highway": {"description": "Major roads and highway infrastructure.", "emoji": "🛣️"},
+  "Industrial": {"description": "Industrial zones, factories and manufacturing areas.", "emoji": "🏭"},
+  "Pasture": {"description": "Open grassland used for livestock grazing.", "emoji": "🐄"},
+  "PermanentCrop": {"description": "Land with permanent crops like vineyards or orchards.", "emoji": "🍇"},
+  "Residential": {"description": "Urban residential areas and housing settlements.", "emoji": "🏘️"},
+  "River": {"description": "Rivers, streams and flowing water bodies.", "emoji": "🌊"},
+  "SeaLake": {"description": "Large water bodies including seas, lakes and reservoirs.", "emoji": "💧"}
+}

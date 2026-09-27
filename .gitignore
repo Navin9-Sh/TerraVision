@@ -1,0 +1,28 @@
+# Python virtual environment for the one-time model export script -- large
+# (torch/torchvision binaries) and machine-specific, never meant to be committed.
+model-export/venv/
+model-export/__pycache__/
+*.pyc
+
+# Build output (backend/.gitignore also covers this from inside backend/, this
+# catches any other Maven/Gradle module added later).
+target/
+build/
+
+# Local secret overrides. This project's real secrets are passed as environment
+# variables (see README.md's env var checklist), never committed to a file -- but
+# if a local override file like this ever gets created for convenience, it must
+# never be committed either.
+.env
+.env.*
+application-local.yml
+application-local.yaml
+application-secrets.yml
+application-secrets.yaml
+
+# IDE / OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db

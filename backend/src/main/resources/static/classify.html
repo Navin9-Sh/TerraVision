@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classify - TerraVision</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="topbar"></div>
+
+<div class="page">
+    <div class="page-header">
+        <h1>Classify a satellite tile</h1>
+        <p>Upload an image and the model returns its top-3 predicted land-use classes.</p>
+    </div>
+
+    <div class="card" style="max-width:560px;">
+        <div class="upload-box" id="uploadBox">
+            <input type="file" id="imageInput" accept="image/*" hidden>
+            <div class="upload-placeholder" id="uploadPlaceholder">
+                <span id="uploadIcon"></span>
+                <p>Click or drag and drop an image</p>
+                <span class="upload-hint">JPG or PNG</span>
+            </div>
+            <img id="previewImage" class="preview-image" style="display:none;" alt="Preview">
+        </div>
+
+        <button class="btn-primary" id="classifyBtn" disabled style="margin-top:16px;">
+            Classify image
+        </button>
+
+        <div id="classifyError" class="alert alert-error" style="display:none; margin-top:16px; margin-bottom:0;"></div>
+    </div>
+
+    <div class="card results-card" id="resultsCard" style="display:none; max-width:560px;">
+        <div id="lowConfidenceBanner" class="alert alert-warning" style="display:none;"></div>
+
+        <div class="result-top">
+            <div>
+                <h2 id="resultClass"></h2>
+                <p id="resultDesc"></p>
+            </div>
+        </div>
+
+        <div id="confidenceBars"></div>
+
+        <p class="result-note" id="inferenceTimeNote"></p>
+    </div>
+
+    <div style="max-width:560px; margin-top:24px;">
+        <div class="page-header" style="margin-bottom:12px;">
+            <p style="font-size:0.82rem; font-weight:600; color:var(--color-ink-muted); text-transform:uppercase; letter-spacing:0.03em;">Classes this model recognizes</p>
+        </div>
+        <div class="class-grid">
+            <span class="class-chip">Annual Crop</span>
+            <span class="class-chip">Forest</span>
+            <span class="class-chip">Herbaceous Vegetation</span>
+            <span class="class-chip">Highway</span>
+            <span class="class-chip">Industrial</span>
+            <span class="class-chip">Pasture</span>
+            <span class="class-chip">Permanent Crop</span>
+            <span class="class-chip">Residential</span>
+            <span class="class-chip">River</span>
+            <span class="class-chip">Sea / Lake</span>
+        </div>
+    </div>
+</div>
+
+<footer>TerraVision - Spring Boot + DJL + PostgreSQL, serving a ResNet50 model trained on EuroSAT (Sentinel-2)</footer>
+
+<script src="js/icons.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script>
+    requireAuth();
+    renderNav('classify');
+</script>
+<script src="js/classify.js"></script>
+</body>
+</html>

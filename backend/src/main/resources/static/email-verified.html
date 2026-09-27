@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email verification - TerraVision</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="auth-shell">
+    <a href="index.html" class="brand">TerraVision</a>
+
+    <div class="auth-card" style="text-align:center;">
+        <div class="auth-icon-row">
+            <span class="icon-badge" id="iconBadge"></span>
+        </div>
+        <h1 id="resultTitle">Checking...</h1>
+        <p class="subtitle" id="resultText"></p>
+
+        <a href="login.html" class="btn-primary" style="text-decoration:none;">Go to log in</a>
+
+        <p class="switch-link" id="resendHint" style="display:none;">
+            Link expired? <a href="verify-pending.html">Resend a verification email</a>
+        </p>
+    </div>
+</div>
+
+<script src="js/icons.js"></script>
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const success = params.get('success') === 'true';
+
+    const iconBadge = document.getElementById('iconBadge');
+    const resultTitle = document.getElementById('resultTitle');
+    const resultText = document.getElementById('resultText');
+
+    if (success) {
+        iconBadge.classList.add('success');
+        iconBadge.innerHTML = ICONS.checkCircle;
+        resultTitle.textContent = 'Email verified';
+        resultText.textContent = 'Your email is verified. You can now log in.';
+    } else {
+        iconBadge.classList.add('error');
+        iconBadge.innerHTML = ICONS.xCircle;
+        resultTitle.textContent = 'Verification link invalid or expired';
+        resultText.textContent = 'This link no longer works. Request a new one below.';
+        document.getElementById('resendHint').style.display = 'block';
+    }
+</script>
+</body>
+</html>

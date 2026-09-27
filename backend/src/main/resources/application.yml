@@ -1,0 +1,126 @@
+server:
+  port: 8080
+
+logging:
+  pattern:
+    # [requestId] before the logger name on every line, populated by
+    # RequestLoggingFilter via MDC so a single request's log lines can be
+    # grepped out of a shared production log stream.
+    console: "%d{HH:mm:ss.SSS} %-5level [%X{requestId:-n/a}] %logger{36} - %msg%n"
+
+spring:
+  application:
+    name: terravision-backend
+  # No SPRING_PROFILES_ACTIVE set -> local `mvn spring-boot:run` gets the dev
+  # profile below (localhost Postgres). docker-compose.yml sets it to "prod"
+  # for the containerized app service (Postgres reached by service name).
+  profiles:
+    active: dev
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  jpa:
+    open-in-view: false
+    hibernate:
+      # Flyway owns the schema; Hibernate only checks its entity mappings match
+      # what Flyway created, it never generates or alters tables itself.
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  mail:
+    host: ${BREVO_SMTP_HOST:smtp-relay.brevo.com}
+    port: ${BREVO_SMTP_PORT:587}
+    username: ${BREVO_SMTP_USERNAME:}
+    password: ${BREVO_SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+  health:
+    # Without this, Spring Boot's auto-registered MailHealthIndicator tests SMTP
+    # connectivity as part of the aggregate health check -- a slow/unreachable mail
+    # relay (or, locally, no SMTP credentials configured yet) would then drag the
+    # *entire* app's health to DOWN, even though the database and model are fine.
+    # Email delivery failures are already handled gracefully (logged, non-fatal) in
+    # VerificationMailService, so they shouldn't also cause an orchestrator like
+    # Render/Railway to think the whole app needs restarting.
+    mail:
+      enabled: false
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+terravision:
+  jwt:
+    # Must be a random string of 32+ characters -- JwtService fails fast at startup
+    # otherwise. Generate one with `openssl rand -base64 32`.
+    secret: ${TERRAVISION_JWT_SECRET:}
+    expiration-minutes: 60
+  mail:
+    from-address: ${MAIL_FROM_ADDRESS:}
+    # Used to build the verification link sent in the email
+    # (<app-base-url>/api/v1/auth/verify?token=...) and its redirect target.
+    # Override to the real public URL once deployed (see DEPLOYMENT.md).
+    app-base-url: ${APP_BASE_URL:http://localhost:8080}
+  admin:
+    # Seeds exactly one ADMIN account on first startup (AdminSeeder). Only required
+    # the very first time the app runs against an empty users table.
+    email: ${ADMIN_EMAIL:}
+    password: ${ADMIN_PASSWORD:}
+  inference:
+    # Directory containing <model-name>.pt and classes.json, produced by
+    # model-export/export_model.py. Relative paths resolve against the JVM's
+    # working directory (the backend/ folder locally, or /app inside the container).
+    model-dir: ./model
+    model-name: terravision-resnet50
+    # Top-1 probability below this is flagged as low-confidence / possibly
+    # out-of-distribution, rather than presented as a confident answer.
+    confidence-threshold: 0.60
+    low-confidence-message: >
+      This model was trained exclusively on Sentinel-2 satellite tiles from the EuroSAT dataset.
+      Low confidence usually means the uploaded image isn't an overhead satellite tile, or uses
+      different sensor/resolution characteristics than the training data. Treat this prediction
+      as unreliable.
+
+---
+# Local development: run via `mvn spring-boot:run` against Postgres started with
+# `docker compose up postgres` (or a local install), reachable at localhost.
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:postgresql://localhost:5432/terravision
+    username: terravision
+    password: terravision
+
+---
+# Containerized: the app itself runs inside docker-compose's network, where the
+# Postgres service is reachable by its service name ("postgres"), not localhost.
+# Every value is env-var overridable so the same image works unmodified on
+# Render/Railway once DB_HOST etc. point at their managed Postgres instance.
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:terravision}
+    username: ${DB_USERNAME:terravision}
+    password: ${DB_PASSWORD:terravision}

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My History - TerraVision</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="topbar"></div>
+
+<div class="page">
+    <div class="page-header">
+        <h1>My history</h1>
+        <p>Every image you've classified, with confidence and timing.</p>
+    </div>
+
+    <div class="stats-row" id="statsRow"></div>
+
+    <div class="dashboard-charts" id="chartsRow" style="display:none;">
+        <div class="card chart-card">
+            <h3>Class distribution</h3>
+            <div id="classDistributionChart"></div>
+        </div>
+        <div class="card chart-card">
+            <h3>Confidence overview</h3>
+            <div id="confidenceOverviewChart"></div>
+        </div>
+    </div>
+
+    <div class="filters-bar">
+        <div class="filter-field">
+            <label for="filterClass">Class</label>
+            <select id="filterClass">
+                <option value="">All</option>
+                <option>AnnualCrop</option>
+                <option>Forest</option>
+                <option>HerbaceousVegetation</option>
+                <option>Highway</option>
+                <option>Industrial</option>
+                <option>Pasture</option>
+                <option>PermanentCrop</option>
+                <option>Residential</option>
+                <option>River</option>
+                <option>SeaLake</option>
+            </select>
+        </div>
+        <div class="filter-field">
+            <label for="filterFrom">From</label>
+            <input type="date" id="filterFrom">
+        </div>
+        <div class="filter-field">
+            <label for="filterTo">To</label>
+            <input type="date" id="filterTo">
+        </div>
+        <div class="filter-field checkbox">
+            <input type="checkbox" id="filterLowConfidence">
+            <label for="filterLowConfidence">Low confidence only</label>
+        </div>
+        <button class="btn-secondary" id="applyFiltersBtn">Apply</button>
+        <button class="btn-secondary" id="resetFiltersBtn">Reset</button>
+    </div>
+
+    <div id="tableWrapper">
+        <div class="loading-state" id="loadingState">Loading...</div>
+    </div>
+
+    <div class="pagination" id="pagination" style="display:none;">
+        <button id="prevPageBtn" aria-label="Previous page"><span id="prevIcon"></span></button>
+        <span id="pageIndicator">Page 1</span>
+        <button id="nextPageBtn" aria-label="Next page"><span id="nextIcon"></span></button>
+    </div>
+</div>
+
+<footer>TerraVision - Spring Boot + DJL + PostgreSQL, serving a ResNet50 model trained on EuroSAT (Sentinel-2)</footer>
+
+<script src="js/icons.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script>
+    requireAuth();
+    renderNav('history');
+</script>
+<script src="js/my-history.js"></script>
+</body>
+</html>

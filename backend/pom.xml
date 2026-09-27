@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.4</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>ai.terravision</groupId>
+    <artifactId>backend</artifactId>
+    <version>0.1.0</version>
+    <name>terravision-backend</name>
+    <description>TerraVision satellite land-use classifier - Spring Boot + DJL backend</description>
+
+    <properties>
+        <java.version>21</java.version>
+        <djl.version>0.29.0</djl.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>ai.djl</groupId>
+                <artifactId>bom</artifactId>
+                <version>${djl.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
+        <!-- JWT issuing/parsing for Stage 8 authentication. jjwt-impl/jackson are
+             runtime-only: application code only ever touches the jjwt-api types. -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>0.12.6</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>0.12.6</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>0.12.6</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.6.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Flyway 10+ split database-specific support into separate artifacts. -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+
+        <!-- Deep Java Library: model loading + inference API -->
+        <dependency>
+            <groupId>ai.djl</groupId>
+            <artifactId>api</artifactId>
+        </dependency>
+
+        <!-- DJL's PyTorch engine: executes TorchScript (.pt) graphs via libtorch/JNI -->
+        <dependency>
+            <groupId>ai.djl.pytorch</groupId>
+            <artifactId>pytorch-engine</artifactId>
+        </dependency>
+
+        <!--
+          Native libtorch binary DJL's PyTorch engine calls into via JNI. pytorch-native-auto
+          (which used to auto-detect OS/arch at runtime) was deprecated in DJL 0.15 and last
+          published in 2020, so it's not usable with DJL 0.29. pytorch-native-cpu requires an
+          explicit classifier instead; ${djl.native.classifier} is set per-OS by the profiles
+          below so the same pom.xml resolves win-x86_64 here and linux-x86_64 inside the
+          Linux-based Stage 5 Docker build, with no manual switching.
+        -->
+        <dependency>
+            <groupId>ai.djl.pytorch</groupId>
+            <artifactId>pytorch-native-cpu</artifactId>
+            <!--
+              Versioned independently of the djl.version property above: this is the
+              libtorch (PyTorch native library) version, not the DJL API version, and
+              isn't covered by the DJL BOM. Must match the torch version pinned in
+              model-export/requirements.txt so the exported TorchScript graph's ops
+              are guaranteed to exist in this native runtime.
+            -->
+            <version>2.3.1</version>
+            <classifier>${djl.native.classifier}</classifier>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+    <!--
+      Selects the DJL native-library classifier by build OS, so `mvn package` resolves
+      the right pytorch-native-cpu binary whether it's run on a Windows dev machine or
+      inside the Linux container built in Stage 5's Dockerfile no -P flag needed.
+    -->
+    <profiles>
+        <profile>
+            <id>native-windows</id>
+            <activation>
+                <os><family>windows</family></os>
+            </activation>
+            <properties>
+                <djl.native.classifier>win-x86_64</djl.native.classifier>
+            </properties>
+        </profile>
+        <profile>
+            <id>native-linux</id>
+            <!--
+              Matched by OS name rather than family="unix": macOS also satisfies the
+              "unix" family in Maven's OS detection, which would activate this profile
+              and native-mac simultaneously and leave the classifier ambiguous.
+            -->
+            <activation>
+                <os><name>Linux</name></os>
+            </activation>
+            <properties>
+                <djl.native.classifier>linux-x86_64</djl.native.classifier>
+            </properties>
+        </profile>
+        <profile>
+            <id>native-mac</id>
+            <activation>
+                <os><family>mac</family></os>
+            </activation>
+            <properties>
+                <djl.native.classifier>osx-x86_64</djl.native.classifier>
+            </properties>
+        </profile>
+    </profiles>
+</project>

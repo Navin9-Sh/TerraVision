@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - TerraVision</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="auth-shell">
+    <a href="index.html" class="brand">TerraVision</a>
+
+    <div class="auth-card">
+        <div class="auth-icon-row">
+            <span class="icon-badge"><span id="userIcon"></span></span>
+        </div>
+        <h1>Create an account</h1>
+        <p class="subtitle">You'll need to verify your email before you can log in.</p>
+
+        <div id="errorAlert" class="alert alert-error" style="display:none;"></div>
+
+        <form id="registerForm">
+            <div class="form-field">
+                <label for="email">Email</label>
+                <div class="input-icon-wrapper">
+                    <span class="input-icon-left" id="mailIcon"></span>
+                    <input type="email" id="email" required autocomplete="email">
+                </div>
+            </div>
+            <div class="form-field">
+                <label for="password">Password</label>
+                <div class="input-icon-wrapper has-toggle">
+                    <span class="input-icon-left" id="lockIcon"></span>
+                    <input type="password" id="password" required minlength="8" autocomplete="new-password">
+                    <button type="button" class="input-icon-toggle" id="togglePassword" aria-label="Show password">
+                        <span id="togglePasswordIcon"></span>
+                    </button>
+                </div>
+            </div>
+            <div class="form-field">
+                <label for="confirmPassword">Confirm password</label>
+                <div class="input-icon-wrapper has-toggle">
+                    <span class="input-icon-left" id="lockIcon2"></span>
+                    <input type="password" id="confirmPassword" required minlength="8" autocomplete="new-password">
+                    <button type="button" class="input-icon-toggle" id="toggleConfirmPassword" aria-label="Show password">
+                        <span id="toggleConfirmPasswordIcon"></span>
+                    </button>
+                </div>
+            </div>
+            <button type="submit" class="btn-primary" id="submitBtn">Create account</button>
+        </form>
+
+        <p class="switch-link">Already have an account? <a href="login.html">Log in</a></p>
+    </div>
+</div>
+
+<script src="js/icons.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script>
+    redirectIfAlreadyLoggedIn();
+    document.getElementById('userIcon').innerHTML = ICONS.user;
+    document.getElementById('mailIcon').innerHTML = ICONS.mail;
+    document.getElementById('lockIcon').innerHTML = ICONS.lock;
+    document.getElementById('lockIcon2').innerHTML = ICONS.lock;
+
+    function wireToggle(inputId, buttonId, iconId) {
+        const input = document.getElementById(inputId);
+        const button = document.getElementById(buttonId);
+        const icon = document.getElementById(iconId);
+        icon.innerHTML = ICONS.eye;
+        button.addEventListener('click', () => {
+            const showing = input.type === 'text';
+            input.type = showing ? 'password' : 'text';
+            icon.innerHTML = showing ? ICONS.eye : ICONS.eyeOff;
+            button.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+        });
+    }
+    wireToggle('password', 'togglePassword', 'togglePasswordIcon');
+    wireToggle('confirmPassword', 'toggleConfirmPassword', 'toggleConfirmPasswordIcon');
+
+    const form = document.getElementById('registerForm');
+    const errorAlert = document.getElementById('errorAlert');
+    const submitBtn = document.getElementById('submitBtn');
+
+    function showError(message) {
+        errorAlert.innerHTML = `<span style="width:18px;height:18px;display:inline-flex;">${ICONS.xCircle}</span><span>${message}</span>`;
+        errorAlert.style.display = 'flex';
+    }
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errorAlert.style.display = 'none';
+
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        if (password !== confirmPassword) {
+            showError('Passwords do not match.');
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creating account...';
+
+        try {
+            await apiFetch('/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
+            window.location.href = `verify-pending.html?email=${encodeURIComponent(email)}`;
+        } catch (err) {
+            showError(err.message);
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Create account';
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: terravision-postgres
+    environment:
+      POSTGRES_DB: terravision
+      POSTGRES_USER: terravision
+      POSTGRES_PASSWORD: terravision
+    ports:
+      - "5432:5432"
+    volumes:
+      - terravision-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U terravision -d terravision"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: ./backend
+    container_name: terravision-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: terravision
+      DB_USERNAME: terravision
+      DB_PASSWORD: terravision
+      # All of the below are local-dev placeholders -- override every one with a
+      # real value for any non-local deployment (see DEPLOYMENT.md).
+      TERRAVISION_JWT_SECRET: local-dev-jwt-secret-please-override-with-32-plus-random-chars
+      ADMIN_EMAIL: admin@terravision.local
+      ADMIN_PASSWORD: change-me-immediately
+      MAIL_FROM_ADDRESS: noreply@terravision.local
+      APP_BASE_URL: http://localhost:8080
+      BREVO_SMTP_USERNAME: ""
+      BREVO_SMTP_PASSWORD: ""
+    ports:
+      - "8080:8080"
+
+  # Local-development-only DB browser. Not part of the deployed system (see
+  # DEPLOYMENT.md) -- Render/Railway don't run this service, it's purely a
+  # convenience for inspecting the predictions table on your own machine.
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: terravision-pgadmin
+    depends_on:
+      - postgres
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@terravision.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - terravision-pgadmin-data:/var/lib/pgadmin
+
+volumes:
+  terravision-postgres-data:
+  terravision-pgadmin-data:
