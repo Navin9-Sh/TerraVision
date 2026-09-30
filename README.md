@@ -94,26 +94,8 @@ an offline export step and never runs alongside the application. The reasoning i
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    subgraph offline["Offline, one-time"]
-        A[best_model.pth] -->|model-export/export_model.py<br/>torch.jit.trace| B[terravision-resnet50.pt<br/>+ classes.json]
-    end
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/3144001e-9823-47ef-ab15-87351ee4ba35" />
 
-    subgraph runtime["Spring Boot application (JVM)"]
-        C[Static frontend<br/>HTML/CSS/JS] -->|fetch + JWT Bearer| D[REST API<br/>/api/v1/*]
-        D --> E[ClassificationService<br/>DJL PyTorch engine]
-        D --> F[PredictionHistoryService]
-        F --> G[(PostgreSQL<br/>users + predictions)]
-        D --> J[AuthService<br/>register / verify / login]
-        J -->|verification email| K[Brevo SMTP]
-        D --> L[Admin endpoints<br/>role=ADMIN only]
-        E -.loads at startup.-> B
-    end
-
-    D --> H[Spring Security<br/>JWT filter]
-    D --> I[Actuator /<br/>Prometheus metrics]
-```
 
 The frontend and API are served from the same Spring Boot process and origin, so no CORS
 configuration is needed. See [ARCHITECTURE.md](ARCHITECTURE.md) for the design decisions in full.
