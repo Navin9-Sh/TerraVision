@@ -1,13 +1,96 @@
-# TerraVision
+<p align="center">
+  <img src="backend/src/main/resources/static/favicon.svg" alt="TerraVision logo" width="88" height="88">
+</p>
 
-Satellite land-use classification (EuroSAT / Sentinel-2, 10 classes) served end-to-end on a
-Spring Boot + PostgreSQL + Docker stack. A fine-tuned ResNet50 is exported once to TorchScript
-and executed **natively inside the JVM** via Deep Java Library (DJL) — no Python process runs
-as part of the live application.
+<h1 align="center">TerraVision</h1>
 
-For the full reasoning behind every major design choice (especially "why Spring Boot + DJL
-instead of a Python backend"), see [ARCHITECTURE.md](ARCHITECTURE.md). For deploying this to
-Render or Railway, see [DEPLOYMENT.md](DEPLOYMENT.md).
+<p align="center">
+  Satellite land-use classification, served end-to-end on the JVM.<br>
+  A ResNet50 trained on EuroSAT (Sentinel-2) runs natively inside Spring Boot via Deep Java Library, with no Python in the live system.
+</p>
+
+<p align="center">
+  <img alt="Java 21" src="https://img.shields.io/badge/Java-21-b5502e?logo=openjdk&logoColor=white">
+  <img alt="Spring Boot 3.3" src="https://img.shields.io/badge/Spring%20Boot-3.3-6DB33F?logo=springboot&logoColor=white">
+  <img alt="PostgreSQL 16" src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white">
+  <img alt="DJL / PyTorch" src="https://img.shields.io/badge/DJL-PyTorch%202.3-EE4C2C?logo=pytorch&logoColor=white">
+  <img alt="Docker" src="https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white">
+  <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg">
+</p>
+
+---
+
+## Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Tech stack](#tech-stack)
+- [Architecture](#architecture)
+- [Quick start](#quick-start)
+- [Local development](#local-development)
+- [Configuration](#configuration)
+- [API reference](#api-reference)
+- [Model card](#model-card)
+- [Project structure](#project-structure)
+- [Testing](#testing)
+- [Roadmap](#roadmap)
+- [Documentation](#documentation)
+- [License](#license)
+- [Author](#author)
+
+## Overview
+
+TerraVision classifies a satellite image tile into one of 10 land-use / land-cover classes
+(annual crop, forest, highway, residential, river, and so on). It is a full rebuild of an earlier
+Flask prototype into a production-shaped system: a Spring Boot API, PostgreSQL persistence,
+JWT-based accounts with email verification, an admin dashboard, and a Docker deployment.
+
+The design choice that defines the project: the trained PyTorch model is exported **once** to
+TorchScript and then executed **inside the JVM** through Deep Java Library (DJL). Python is only
+an offline export step and never runs alongside the application. The reasoning is written up in
+[ARCHITECTURE.md](ARCHITECTURE.md).
+
+## Features
+
+**Classification**
+- Upload a satellite tile and get the predicted class, a description and the model's confidence.
+- Low-confidence guard: predictions below a configurable threshold are flagged with an explicit
+  warning instead of being presented as a confident answer.
+- Results are cached by the SHA-256 of the image bytes, so a repeat upload returns instantly.
+
+**Accounts and access**
+- Registration with email verification (Brevo SMTP), BCrypt password hashing and stateless JWT login.
+- Separate user and admin sign-in, with role-based authorization on `/api/v1/admin/**`.
+- Logout fully clears the session, and protected pages never reappear via the browser's Back button.
+
+**History and analytics**
+- Per-user prediction history with filters (class, date range, low-confidence only) and pagination.
+- Personal stats: totals, average confidence, low-confidence rate, class distribution.
+- Admin dashboard listing every user and every prediction across accounts.
+
+**Pune district LULC map**
+- An interactive land-cover map of Pune district, generated from Sentinel-2 imagery with Google
+  Earth Engine (21,980 tiles classified at 10 m resolution).
+
+**Operations**
+- Flyway-managed schema migrations, Actuator health and Prometheus metrics, OpenAPI / Swagger UI,
+  and per-request IDs in every log line.
+- Fail-fast startup: a missing JWT secret or admin credentials stops the app with a clear error
+  rather than falling back to something insecure.
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Language / runtime | Java 21 |
+| Backend | Spring Boot 3.3, Spring Security, Spring Data JPA |
+| Inference | Deep Java Library 0.29 (PyTorch 2.3.1 engine), TorchScript model |
+| Database | PostgreSQL 16, Flyway migrations |
+| Auth | JWT (stateless), BCrypt, email verification via Brevo SMTP |
+| Frontend | Plain HTML, CSS and JavaScript served by Spring Boot (no framework) |
+| Observability | Spring Boot Actuator, Micrometer / Prometheus |
+| Packaging | Docker, Docker Compose |
+| Model training / export | Python, PyTorch (offline only) |
 
 ## Architecture
 
@@ -32,121 +115,120 @@ flowchart LR
     D --> I[Actuator /<br/>Prometheus metrics]
 ```
 
-## Repository layout
+The frontend and API are served from the same Spring Boot process and origin, so no CORS
+configuration is needed. See [ARCHITECTURE.md](ARCHITECTURE.md) for the design decisions in full.
 
-```
-TerraVision/
-├── TerraVision/            # Original Flask prototype (untouched, kept for reference)
-├── model-export/           # One-time offline export script (Python)
-├── backend/                # Spring Boot application (the live system)
-│   ├── src/main/java/ai/terravision/
-│   │   ├── inference/       # DJL model loading, preprocessing, /predict
-│   │   ├── prediction/      # JPA entity, repository, /history (per-user scoped)
-│   │   ├── user/            # User entity, roles, admin account seeding
-│   │   ├── auth/            # JWT issuing/parsing, register/verify/login
-│   │   ├── admin/           # /admin/users, /admin/predictions (role=ADMIN only)
-│   │   ├── mail/            # Verification email (Brevo SMTP)
-│   │   ├── stats/           # /stats aggregation (per-user)
-│   │   ├── health/          # /health
-│   │   ├── security/        # Spring Security config, JWT auth filter
-│   │   └── common/          # Error handling, OpenAPI, shared config
-│   ├── src/main/resources/
-│   │   ├── static/          # Frontend: auth pages, Classify, My History,
-│   │   │                    # Model Info, About, Admin Dashboard
-│   │   └── db/migration/    # Flyway SQL migrations
-│   └── Dockerfile
-├── docker-compose.yml       # Postgres + app, for local or containerized runs
-├── DEPLOYMENT.md
-└── ARCHITECTURE.md
+## Quick start
+
+The fastest way to run everything (app, PostgreSQL and a pgAdmin browser for the database) is
+Docker Compose.
+
+**Prerequisites:** Docker Desktop and Git. The model files must exist under `backend/model/`
+(they are committed; see [Model card](#model-card) to regenerate them).
+
+```bash
+git clone https://github.com/Navin9-Sh/TerraVision.git
+cd TerraVision
+
+cp .env.example .env        # then edit .env and set real values (see Configuration)
+docker compose up --build
 ```
 
-## Setup & run (local development)
+Then open:
 
-### 1. One-time model export (Python, offline only)
+| URL | What |
+|---|---|
+| http://localhost:8080 | Web app |
+| http://localhost:8080/swagger-ui.html | Interactive API docs |
+| http://localhost:5050 | pgAdmin (local development only) |
 
-Requires Python 3.11 or 3.12 specifically — `torch==2.3.1` (pinned to match the libtorch
-version DJL 0.29.0 bundles) has no wheel for very new Python releases.
+Sign in with the `ADMIN_EMAIL` / `ADMIN_PASSWORD` you put in `.env`. That account is created on
+first startup. Regular users register on the site and verify their email.
+
+> Compose bakes the app into an image, so after changing code or frontend files you must rebuild
+> with `docker compose up --build`. For day-to-day development use the workflow below instead.
+
+## Local development
+
+Run only PostgreSQL in Docker and the app directly with Maven; frontend edits then need just an
+app restart, not an image rebuild.
+
+```bash
+docker compose up -d postgres
+
+cd backend
+export TERRAVISION_JWT_SECRET="$(openssl rand -base64 32)"
+export ADMIN_EMAIL="you@example.com"
+export ADMIN_PASSWORD="choose-a-real-password"
+mvn spring-boot:run
+```
+
+On Windows PowerShell, set the variables with `$env:NAME = "value"` and generate a secret with
+`[Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }))`.
+
+The app uses the `dev` profile by default (PostgreSQL on `localhost:5432`); Compose runs it with
+the `prod` profile. Flyway applies the schema on startup.
+
+### Regenerating the model (optional)
+
+Only needed if the model is retrained. Requires Python 3.11 or 3.12 (`torch==2.3.1` is pinned to
+match the libtorch version DJL bundles).
 
 ```bash
 cd model-export
-py -3.12 -m venv venv          # or: python -m venv venv, if your default Python is 3.11/3.12
-venv\Scripts\activate          # Windows; source venv/bin/activate on macOS/Linux
+python -m venv venv
+venv\Scripts\activate            # macOS/Linux: source venv/bin/activate
 pip install -r requirements.txt
 python export_model.py
 ```
 
-This reads `TerraVision/best_model.pth` + `TerraVision/classes.json`, traces the model to
-TorchScript, verifies the traced output matches the original (max abs difference must be
-< 1e-5), and writes `backend/model/terravision-resnet50.pt` + `backend/model/classes.json`.
-**This step only ever needs to be re-run if the model is retrained.**
+The script traces the model to TorchScript, verifies the traced output matches the original
+(max absolute difference below 1e-5), and writes `backend/model/terravision-resnet50.pt` and
+`backend/model/classes.json`.
 
-### 2. Start PostgreSQL
+## Configuration
 
-```bash
-docker compose up -d postgres
-```
+Every secret is supplied as an environment variable. Nothing sensitive is committed; `.env` is
+git-ignored and `.env.example` is the template.
 
-### 3. Run the Spring Boot app
+| Variable | Required | Purpose |
+|---|---|---|
+| `TERRAVISION_JWT_SECRET` | Yes | Signs login tokens. 32+ random characters. The app refuses to start without it. |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | First run | Seeds the single admin account on an empty database. |
+| `MAIL_FROM_ADDRESS` | For email | Sender address on verification emails (must be verified in Brevo). |
+| `BREVO_SMTP_USERNAME`, `BREVO_SMTP_PASSWORD` | For email | Brevo SMTP login and key. |
+| `APP_BASE_URL` | Deployed | Public URL used to build verification links. Default `http://localhost:8080`. |
+| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD` | `prod` profile | PostgreSQL connection. |
+| `SPRING_PROFILES_ACTIVE` | Deployed | Use `prod` in containers. |
 
-Requires a handful of env vars beyond the DB connection (all fail fast with a clear error if
-missing, rather than silently falling back to something insecure):
-
-```bash
-export TERRAVISION_JWT_SECRET="$(openssl rand -base64 32)"   # 32+ random chars, required
-export ADMIN_EMAIL="you@example.com"                          # seeds the one ADMIN account
-export ADMIN_PASSWORD="choose-a-real-password"                 # on first run only
-export MAIL_FROM_ADDRESS="you@example.com"                     # must be Brevo-verified
-export BREVO_SMTP_USERNAME="your-brevo-smtp-login"
-export BREVO_SMTP_PASSWORD="your-brevo-smtp-key"
-
-cd backend
-mvn spring-boot:run
-```
-
-Flyway runs the schema migrations automatically on startup, and `AdminSeeder` creates the one
-ADMIN account from `ADMIN_EMAIL`/`ADMIN_PASSWORD` the first time it runs against an empty
-`users` table (a no-op on every startup after that). Open `http://localhost:8080` for the UI, or
-`http://localhost:8080/swagger-ui.html` for the API docs.
-
-Setting up Brevo (free tier, 300 emails/day): sign up at brevo.com, verify a sender email under
-**Senders, Domains & Dedicated IPs**, then get your SMTP login and generate an SMTP key under the
-**SMTP & API** tab.
-
-### 4. Run the full containerized stack instead
-
-```bash
-docker compose up --build
-```
-
-Builds the app image (model files must already exist under `backend/model/` from step 1) and
-runs both services with the `prod` Spring profile.
+Model behaviour is configured under `terravision.inference.*` in
+[application.yml](backend/src/main/resources/application.yml), including the confidence threshold.
+For production deployment (Render / Railway) and the security checklist, see [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## API reference
 
-All endpoints are versioned under `/api/v1`. Full interactive docs (with request/response
-schemas) are at `/swagger-ui.html`; this is the quick reference.
-
-Every endpoint except `/api/v1/health` and `/api/v1/auth/**` requires an `Authorization: Bearer
-<jwt>` header, obtained from `/api/v1/auth/login`. `/api/v1/admin/**` additionally requires the
-token's role claim to be `ADMIN` (see [ARCHITECTURE.md](ARCHITECTURE.md) for the full auth
-design, including why a shared API key was replaced with per-user JWTs).
+All endpoints are versioned under `/api/v1`, with full schemas in Swagger UI at
+`/swagger-ui.html`. Every endpoint except `health` and `auth/**` requires an
+`Authorization: Bearer <jwt>` header; `admin/**` additionally requires the `ADMIN` role.
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| POST | `/api/v1/auth/register` | none | Create an account (unverified until the emailed link is clicked) |
+| POST | `/api/v1/auth/register` | none | Create an account (unverified until the emailed link is used) |
 | POST | `/api/v1/auth/resend-verification` | none | Re-send the verification email |
-| GET | `/api/v1/auth/verify?token=...` | none | Verifies the account, redirects to `/email-verified.html` |
-| POST | `/api/v1/auth/login` | none | Returns a JWT; rejected with 403 if the email isn't verified yet |
-| POST | `/api/v1/predict` | JWT | Multipart image upload → top-3 classes with confidence, low-confidence flag |
-| GET | `/api/v1/history` | JWT | Paginated history for the logged-in user; filters: `predictedClass`, `from`, `to`, `lowConfidenceOnly` |
-| GET | `/api/v1/stats` | JWT | Aggregate stats for the logged-in user |
-| GET | `/api/v1/admin/users` | JWT, role=ADMIN | Every registered user, with prediction counts |
-| GET | `/api/v1/admin/predictions` | JWT, role=ADMIN | Every prediction across all users; filters: `userId`, `predictedClass`, `from`, `to`, `lowConfidenceOnly` |
-| GET | `/api/v1/health` | none | App-level health (model loaded?) |
-| GET | `/actuator/health` | none | Infrastructure-level liveness (Spring Boot Actuator) |
-| GET | `/actuator/prometheus` | none | Metrics in Prometheus exposition format |
+| GET | `/api/v1/auth/verify?token=...` | none | Verify the account and redirect to `/email-verified.html` |
+| POST | `/api/v1/auth/login` | none | Returns a JWT (403 if the email is not verified) |
+| POST | `/api/v1/predict` | JWT | Multipart image upload, returns the top class, confidence and low-confidence flag |
+| GET | `/api/v1/history` | JWT | Paginated history for the current user; filters `predictedClass`, `from`, `to`, `lowConfidenceOnly` |
+| GET | `/api/v1/stats` | JWT | Aggregate stats for the current user |
+| GET | `/api/v1/admin/users` | JWT, ADMIN | All users with prediction counts |
+| GET | `/api/v1/admin/predictions` | JWT, ADMIN | All predictions; filters `userId`, `predictedClass`, `from`, `to`, `lowConfidenceOnly` |
+| GET | `/api/v1/health` | none | App health (is the model loaded?) |
+| GET | `/actuator/health` | none | Infrastructure liveness |
+| GET | `/actuator/prometheus` | none | Prometheus metrics |
 
-Example:
+Authentication failures return `401`; a signed-in user without permission gets `403`.
+
+**Example**
 
 ```bash
 TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
@@ -158,40 +240,97 @@ curl -H "Authorization: Bearer $TOKEN" \
      http://localhost:8080/api/v1/predict
 ```
 
+```json
+{
+  "className": "AnnualCrop",
+  "confidencePercent": 78.5,
+  "description": "Agricultural land used for annual crops like wheat, corn or rice.",
+  "lowConfidence": false,
+  "warningMessage": null,
+  "inferenceTimeMs": 41
+}
+```
+
 ## Model card
 
-- **Task**: single-label classification of a satellite image tile into one of 10 land-use
-  classes.
-- **Architecture**: ResNet50 (ImageNet-pretrained), final layer replaced with a 10-way linear
-  classifier, fine-tuned in two phases (final layer only, then the full network).
-- **Dataset**: EuroSAT — 27,000 Sentinel-2 image patches, 64×64 pixels at 10 m/pixel
-  resolution, 10 balanced classes.
-- **Reported test accuracy**: 97.85% (see `TerraVision/notebooks/LULC_Part1_Image_Classification.ipynb`
-  for the full training run and per-class metrics).
-- **Serving**: the trained PyTorch model is exported once to TorchScript and executed inside
-  the JVM via DJL's PyTorch engine; preprocessing (aspect-preserving letterbox resize to
-  224×224, ImageNet normalization) is reimplemented in Java to match training exactly.
-- **Known limitation — domain shift**: the model has only ever seen top-down Sentinel-2
-  tiles. Ground-level photos, drone imagery, screenshots, or imagery from other sensors will
-  typically produce a low, spread-out top-1 probability. Rather than presenting these as
-  confident answers, every prediction below a configurable threshold
-  (`terravision.inference.confidence-threshold`, default 0.60) is returned with
-  `lowConfidence: true` and an explicit warning message, surfaced identically in the JSON API
-  and the UI. See [backend's Model Info page](backend/src/main/resources/static/model-info.html)
-  for the full limitations writeup.
+| | |
+|---|---|
+| **Task** | Single-label classification of a satellite tile into 10 land-use classes |
+| **Architecture** | ResNet50 (ImageNet-pretrained), final layer replaced with a 10-way classifier, fine-tuned in two phases (head only, then full network) |
+| **Dataset** | EuroSAT: 27,000 Sentinel-2 patches, 64×64 px at 10 m/pixel, 10 balanced classes |
+| **Test accuracy** | 97.85% (see `TerraVision/notebooks/LULC_Part1_Image_Classification.ipynb` in the original prototype) |
+| **Serving** | TorchScript export executed by DJL's PyTorch engine; letterbox resize to 224×224 and ImageNet normalization reimplemented in Java to match training |
 
-## Future improvements
+**Classes:** Annual Crop, Forest, Herbaceous Vegetation, Highway, Industrial, Pasture,
+Permanent Crop, Residential, River, Sea / Lake.
+
+**Known limitation: domain shift.** The model has only seen top-down Sentinel-2 tiles. Ground-level
+photos, drone imagery, screenshots or other sensors typically produce a low, spread-out
+confidence. Rather than presenting these as confident answers, any prediction below the
+confidence threshold (`terravision.inference.confidence-threshold`) is returned with
+`lowConfidence: true` and a warning, surfaced identically in the API and the UI. The in-app
+[Model Info](backend/src/main/resources/static/model-info.html) page has the full write-up.
+
+## Project structure
+
+```
+TerraVision/
+├── backend/                       # Spring Boot application (the live system)
+│   ├── src/main/java/ai/terravision/
+│   │   ├── inference/             # DJL model loading, preprocessing, /predict
+│   │   ├── prediction/            # JPA entity, repository, /history
+│   │   ├── user/                  # User entity, roles, admin seeding
+│   │   ├── auth/                  # JWT, register / verify / login
+│   │   ├── admin/                 # /admin/users, /admin/predictions
+│   │   ├── mail/                  # Verification email (Brevo SMTP)
+│   │   ├── stats/                 # /stats aggregation
+│   │   ├── health/                # /health
+│   │   ├── security/              # Spring Security config, JWT filter
+│   │   └── common/                # Error handling, OpenAPI, shared config
+│   ├── src/main/resources/
+│   │   ├── static/                # Frontend pages, JS and CSS
+│   │   └── db/migration/          # Flyway SQL migrations
+│   ├── model/                     # Exported TorchScript model + class list
+│   └── Dockerfile
+├── model-export/                  # One-time offline export script (Python)
+├── docker-compose.yml             # PostgreSQL, app, pgAdmin (local only)
+├── ARCHITECTURE.md
+└── DEPLOYMENT.md
+```
+
+## Testing
+
+```bash
+cd backend
+mvn test
+```
+
+Unit tests cover image preprocessing, and an integration test loads the real model and checks
+a prediction end to end against the bundled sample tile.
+
+## Roadmap
 
 Deliberately out of scope for now, not half-implemented:
 
-- **Forgot-password flow.** Registration, email verification, and login all exist; a
-  reset-password-via-email flow does not yet. It would reuse the same token-generation and
-  Brevo-sending machinery already in `AuthService`/`VerificationMailService` — a new `User`
-  field for a reset token + expiry, a `POST /api/v1/auth/forgot-password` to issue and email it,
-  and a `POST /api/v1/auth/reset-password` to consume it.
-- **Refresh tokens.** JWTs currently expire after 60 minutes with no renewal path; the user has
-  to log in again. A refresh-token endpoint would extend a session without re-entering a
-  password, at the cost of a second token type to manage securely.
-- **Predictor pooling.** `ClassificationService` creates a new DJL `Predictor` per request
-  (required since it isn't thread-safe) — fine at this project's scale, but worth pooling if
-  concurrent load ever became a bottleneck (see ARCHITECTURE.md's latency section).
+- **Forgot-password flow.** Would reuse the existing token and email machinery with a reset token
+  on `User` plus `forgot-password` and `reset-password` endpoints.
+- **Refresh tokens.** JWTs expire after 60 minutes with no renewal path; refresh tokens would extend
+  sessions at the cost of a second token type to manage securely.
+- **Predictor pooling.** A new DJL `Predictor` is created per request because it is not thread-safe;
+  worth pooling only if concurrent load becomes a bottleneck (see the latency notes in ARCHITECTURE.md).
+
+## Documentation
+
+- [ARCHITECTURE.md](ARCHITECTURE.md): design decisions, including why Spring Boot + DJL instead of a Python backend
+- [DEPLOYMENT.md](DEPLOYMENT.md): Render / Railway deployment and the pre-deployment security checklist
+
+## License
+
+Released under the [MIT License](LICENSE).
+
+## Author
+
+Built by **Navin** ([@Navin9-Sh](https://github.com/Navin9-Sh)).
+
+Data and models: [EuroSAT](https://github.com/phelber/EuroSAT) (Helber et al.), Sentinel-2 imagery
+(ESA / Copernicus), inference via [Deep Java Library](https://djl.ai).
