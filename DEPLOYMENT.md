@@ -25,6 +25,7 @@ working, secure deployment:
 | `TERRAVISION_JWT_SECRET` | Signs/verifies login JWTs. Must be 32+ random characters — generate with `openssl rand -base64 32`. | **Fails fast at startup** (`JwtService` throws `IllegalStateException`) — the app will not start with a missing or short secret. Cannot be silently forgotten. |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Seeds the one ADMIN account, first startup only. | **Fails fast** on a fresh database (`AdminSeeder` throws if unset and no admin exists yet). A no-op (safe to leave unset) on every startup after the first admin is created. |
 | `MAIL_FROM_ADDRESS` | The "from" address on verification emails — must be a Brevo-verified sender. | Not a security risk, but registration emails will fail to send (logged, not fatal — accounts still get created, just unverifiable until you fix this and use resend-verification). |
+| `BREVO_API_KEY` | Brevo API key (**SMTP & API** tab > **API Keys**). Sends verification emails over HTTPS; **required on Railway Hobby and Render free**, where SMTP ports are blocked. | Emails fall back to SMTP, which those hosts block, so verification emails will not arrive. |
 | `BREVO_SMTP_USERNAME` / `BREVO_SMTP_PASSWORD` | Brevo SMTP login + generated SMTP key (from Brevo's **SMTP & API** tab — the SMTP login is `something@smtp-brevo.com`, not your account email). | Same as above — emails silently fail to send, nothing insecure happens. |
 | `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD` | Your managed Postgres connection details. | **This is the one gap that does *not* fail fast** — if left unset, the `prod` profile falls back to `terravision`/`terravision`. Against a real managed Postgres instance this simply fails to authenticate (not a silent security hole against your actual data), but you must still set these explicitly; don't rely on the fallback existing as a safety net. |
 | `APP_BASE_URL` | Used to build the verification link emailed to users, and its redirect target. | Must be your real public URL (e.g. `https://terravision.onrender.com`) or verification links will point at `localhost` and be useless to real users. |
@@ -80,42 +81,21 @@ That means every fresh container start needs outbound internet access and takes 
 ~10-15 seconds the first time. This has worked in every test so far, but if your deployment
 platform blocks outbound requests at startup, this is the first thing to check.
 
-## Why Render over Railway for this project
+## Choosing a host (read this first)
 
-Both build directly from a Dockerfile in a connected repo and support managed Postgres, so
-either works. Render is the better fit here specifically because:
+Two facts about this app decide where it can run:
 
-- Render's free tier includes a genuinely free managed Postgres instance (90-day limit, then a
-  small monthly cost) and a free web service tier — enough to fully demo this project at no
-  cost, which matters for a portfolio project.
-- Railway moved to usage-based billing with a small monthly credit rather than an indefinite
-  free tier — fine, but it's easier to accidentally leave a service running and accrue cost than
-  it is on Render, where the free web service tier simply spins down when idle instead of
-  charging you.
-- The trade-off you're accepting with Render's free tier: the web service spins down after 15
-  minutes of inactivity, so the first request after a period of no traffic pays the ~25-30
-  second JVM+DJL+model-loading cold start you've already seen locally. For a demo you spin up
-  when someone wants to look at it, that's a reasonable trade for zero cost; for something that
-  needs to always feel instant, Railway (always-on, but metered) or a paid Render tier would be
-  the better call.
+1. **Memory.** The JVM plus libtorch plus the ResNet50 model uses roughly **600 MB at idle**
+   (measured with `docker stats`), more during inference. Any 512 MB plan, including Render's free
+   and Starter tiers, will be killed for running out of memory. Use a host with **1 GB or more**.
+2. **Outbound SMTP.** Render's free tier (since Sept 2025) and Railway's Free/Hobby plans block
+   SMTP ports, so verification emails sent through Brevo's SMTP relay would silently fail. The
+   app therefore supports **Brevo's HTTPS API**: set `BREVO_API_KEY` and emails go out over
+   port 443, which no host blocks. (SMTP is still used locally when the key is unset.)
 
-## Render, step by step
-
-1. Push this repository to GitHub — `backend/model/*.pt` and `classes.json` are committed
-   directly (see above), so they're already in the build context with no extra step.
-2. In the Render dashboard: **New > PostgreSQL**. Note the internal connection details (host,
-   port, database, username, password) it gives you.
-3. **New > Web Service** → connect the repo → Render detects `backend/Dockerfile`
-   automatically (set **Root Directory** to `backend` if it doesn't).
-4. Set every environment variable from the checklist above on the web service, using step 2's
-   real Postgres connection details for `DB_HOST`/`DB_PORT`/`DB_NAME`/`DB_USERNAME`/`DB_PASSWORD`,
-   your own generated value for `TERRAVISION_JWT_SECRET`, your real admin credentials, your real
-   Brevo credentials, and `APP_BASE_URL` set to the `https://<your-app>.onrender.com` URL Render
-   assigns (you'll see this after the first deploy, then update the env var and redeploy).
-5. Set **Health Check Path** to `/actuator/health`.
-6. Render builds the Dockerfile and deploys. Once live, hit
-   `https://<your-app>.onrender.com/api/v1/health` (no auth needed) to confirm the model loaded,
-   then open the root URL for the UI.
+Recommended: **Railway (Hobby plan, about $5/month)**. It offers up to 8 GB per service, builds
+straight from the Dockerfile and has managed Postgres. Render works too, but only on a paid plan
+with at least 1 GB of RAM, and its free Postgres is deleted after 30 days.
 
 ## Railway, step by step
 
@@ -128,7 +108,20 @@ either works. Render is the better fit here specifically because:
    variable from the checklist above under **Variables**, mapping `DB_HOST=${{Postgres.PGHOST}}`
    etc. using Railway's variable-reference syntax for the Postgres ones, and your own real
    values for the JWT/admin/Brevo/`APP_BASE_URL` ones.
-5. Railway builds and deploys automatically on push. Confirm via `/api/v1/health`.
+5. Set `SPRING_PROFILES_ACTIVE=prod` and `BREVO_API_KEY`, then under **Settings > Networking** click
+   **Generate Domain** to get the public URL. Put that URL (with `https://`) in `APP_BASE_URL`.
+6. Railway builds and deploys automatically on push. Confirm via `/api/v1/health`, and set the health
+   check path to `/actuator/health` under **Settings > Deploy**.
+
+## Render, step by step (paid plan with 1 GB+ RAM only)
+
+1. **New > PostgreSQL**, then note its internal host, port, database, user and password.
+2. **New > Web Service**, connect the repo, set **Root Directory** to `backend` (Render detects the
+   Dockerfile), and choose an instance type with at least 1 GB of RAM.
+3. Set the environment variables from the checklist above (including `BREVO_API_KEY`,
+   `SPRING_PROFILES_ACTIVE=prod` and the `DB_*` values from step 1). Set `APP_BASE_URL` to the
+   `https://<your-app>.onrender.com` URL once Render assigns it.
+4. Set **Health Check Path** to `/actuator/health`, deploy, and confirm `/api/v1/health`.
 
 ## Local production-like run
 

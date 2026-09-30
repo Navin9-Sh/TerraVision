@@ -1,5 +1,6 @@
 server:
-  port: 8080
+  # Container platforms (Render, Railway, ...) inject the port to listen on as PORT.
+  port: ${PORT:8080}
 
 logging:
   pattern:
@@ -75,6 +76,10 @@ terravision:
     expiration-minutes: 60
   mail:
     from-address: ${MAIL_FROM_ADDRESS:}
+    # If set, verification emails go out through Brevo's HTTPS API (port 443) instead of
+    # SMTP. Needed on hosts that block outbound SMTP ports (Render free, Railway Hobby).
+    # Leave empty to use the SMTP relay configured under spring.mail.
+    brevo-api-key: ${BREVO_API_KEY:}
     # Used to build the verification link sent in the email
     # (<app-base-url>/api/v1/auth/verify?token=...) and its redirect target.
     # Override to the real public URL once deployed (see DEPLOYMENT.md).

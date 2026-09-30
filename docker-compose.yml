@@ -41,6 +41,7 @@ services:
       APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8080}
       BREVO_SMTP_USERNAME: ${BREVO_SMTP_USERNAME:-}
       BREVO_SMTP_PASSWORD: ${BREVO_SMTP_PASSWORD:-}
+      BREVO_API_KEY: ${BREVO_API_KEY:-}
     ports:
       - "8080:8080"
 

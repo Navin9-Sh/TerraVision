@@ -29,4 +29,6 @@ COPY model ./model
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Sized for small container plans: cap the heap at a share of the container limit (the
+# rest is left for libtorch's native memory) and use the low-footprint serial GC.
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=60", "-XX:+UseSerialGC", "-jar", "app.jar"]

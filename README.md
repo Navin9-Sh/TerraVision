@@ -178,7 +178,8 @@ git-ignored and `.env.example` is the template.
 | `TERRAVISION_JWT_SECRET` | Yes | Signs login tokens. 32+ random characters. The app refuses to start without it. |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | First run | Seeds the single admin account on an empty database. |
 | `MAIL_FROM_ADDRESS` | For email | Sender address on verification emails (must be verified in Brevo). |
-| `BREVO_SMTP_USERNAME`, `BREVO_SMTP_PASSWORD` | For email | Brevo SMTP login and key. |
+| `BREVO_API_KEY` | For email on cloud hosts | Brevo API key. Sends email over HTTPS, which works where SMTP ports are blocked. Takes precedence over SMTP when set. |
+| `BREVO_SMTP_USERNAME`, `BREVO_SMTP_PASSWORD` | For email locally | Brevo SMTP login and key (used only when `BREVO_API_KEY` is empty). |
 | `APP_BASE_URL` | Deployed | Public URL used to build verification links. Default `http://localhost:8080`. |
 | `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD` | `prod` profile | PostgreSQL connection. |
 | `SPRING_PROFILES_ACTIVE` | Deployed | Use `prod` in containers. |
