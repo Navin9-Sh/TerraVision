@@ -15,6 +15,7 @@ build/
 # never be committed either.
 .env
 .env.*
+!.env.example
 application-local.yml
 application-local.yaml
 application-secrets.yml
@@ -26,3 +27,11 @@ application-secrets.yaml
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Original Flask prototype, kept locally for reference only (documented in prose
+# in README.md/ARCHITECTURE.md instead). Not tracked in this repo: it carries its
+# own leftover .git from before this project existed (an unregistered gitlink,
+# not a real submodule) and a 91 MB checkpoint that duplicates the traced model
+# already committed under backend/model/ -- shipping it here would ~triple this
+# repo's binary weight for content a portfolio viewer doesn't need to clone.
+TerraVision/
