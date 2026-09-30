@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pune Map - TerraVision</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="topbar"></div>
+
+<div class="page" style="max-width:1100px;">
+    <div class="page-header">
+        <h1>Pune District - LULC Map</h1>
+        <p>Generated from real Sentinel-2 satellite imagery using Google Earth Engine.</p>
+    </div>
+
+    <div class="content-card map-stats">
+        <div><strong>21,980</strong><span>Tiles classified</span></div>
+        <div><strong>10</strong><span>Land cover classes</span></div>
+        <div><strong>10m</strong><span>Resolution</span></div>
+        <div><strong>97.85%</strong><span>Model accuracy</span></div>
+    </div>
+
+    <iframe src="pune-lulc-map.html" class="map-iframe" title="Pune LULC Map"></iframe>
+
+    <div class="content-card">
+        <h2>Map legend</h2>
+        <div class="legend-grid">
+            <div class="legend-item"><span style="background:#90EE90"></span> Annual Crop</div>
+            <div class="legend-item"><span style="background:#228B22"></span> Forest</div>
+            <div class="legend-item"><span style="background:#9ACD32"></span> Herbaceous Vegetation</div>
+            <div class="legend-item"><span style="background:#808080"></span> Highway</div>
+            <div class="legend-item"><span style="background:#FF0000"></span> Industrial</div>
+            <div class="legend-item"><span style="background:#3CB371"></span> Pasture</div>
+            <div class="legend-item"><span style="background:#7FFF00"></span> Permanent Crop</div>
+            <div class="legend-item"><span style="background:#FF00FF"></span> Residential</div>
+            <div class="legend-item"><span style="background:#1E90FF"></span> River</div>
+            <div class="legend-item"><span style="background:#0000FF"></span> Sea / Lake</div>
+        </div>
+    </div>
+</div>
+
+<footer>TerraVision - Spring Boot + DJL + PostgreSQL, serving a ResNet50 model trained on EuroSAT (Sentinel-2)</footer>
+
+<script src="js/icons.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script>
+    initProtectedPage('pune-map');
+</script>
+</body>
+</html>

@@ -7,7 +7,10 @@ const resultsCard = document.getElementById('resultsCard');
 const lowConfidenceBanner = document.getElementById('lowConfidenceBanner');
 const classifyError = document.getElementById('classifyError');
 
+const uploadAnotherBtn = document.getElementById('uploadAnotherBtn');
+
 document.getElementById('uploadIcon').innerHTML = ICONS.upload;
+document.getElementById('uploadAnotherIcon').innerHTML = ICONS.refresh;
 
 uploadBox.addEventListener('click', () => imageInput.click());
 
@@ -65,9 +68,23 @@ classifyBtn.addEventListener('click', async () => {
     classifyBtn.disabled = false;
 });
 
-function showResults(result) {
-    const top = result.top3[0];
+uploadAnotherBtn.addEventListener('click', resetUpload);
 
+/** Back to the empty upload state, without reloading the page. */
+function resetUpload() {
+    imageInput.value = '';
+    previewImage.removeAttribute('src');
+    previewImage.style.display = 'none';
+    uploadPlaceholder.style.display = '';
+    classifyBtn.disabled = true;
+    classifyBtn.textContent = 'Classify image';
+    resultsCard.style.display = 'none';
+    lowConfidenceBanner.style.display = 'none';
+    classifyError.style.display = 'none';
+    uploadBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function showResults(result) {
     resultsCard.classList.toggle('low-confidence', result.lowConfidence);
 
     if (result.lowConfidence) {
@@ -77,20 +94,10 @@ function showResults(result) {
         lowConfidenceBanner.style.display = 'none';
     }
 
-    document.getElementById('resultClass').textContent = top.className;
-    document.getElementById('resultDesc').textContent = top.description;
-
-    const barsHtml = result.top3.map(r => `
-        <div class="bar-row">
-            <span class="bar-label">${r.className}</span>
-            <div class="bar-track">
-                <div class="bar-fill" style="width:${r.confidencePercent}%"></div>
-            </div>
-            <span class="bar-pct">${r.confidencePercent}%</span>
-        </div>
-    `).join('');
-
-    document.getElementById('confidenceBars').innerHTML = barsHtml;
+    document.getElementById('resultClass').textContent = result.className;
+    document.getElementById('resultDesc').textContent = result.description;
+    document.getElementById('resultPct').textContent = formatPercent(result.confidencePercent);
+    document.getElementById('resultBar').style.width = `${result.confidencePercent}%`;
     document.getElementById('inferenceTimeNote').textContent =
         `Inference took ${result.inferenceTimeMs} ms - EuroSAT Sentinel-2 model (10 classes)`;
 

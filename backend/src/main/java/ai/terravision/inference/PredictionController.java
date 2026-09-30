@@ -48,7 +48,7 @@ public class PredictionController {
     }
 
     @Operation(summary = "Classify an uploaded image",
-            description = "Returns the top-3 predicted EuroSAT classes with confidence scores. "
+            description = "Returns the top predicted EuroSAT class with its confidence score. "
                     + "Predictions below the configured confidence threshold are flagged as low-confidence.")
     @ApiResponse(responseCode = "200", description = "Classification succeeded")
     @ApiResponse(responseCode = "400", description = "Missing, empty, or non-image upload")
@@ -62,9 +62,8 @@ public class PredictionController {
         PredictionResult result = classificationService.predictCached(imageHash, bytes);
         historyService.record(imageHash, image.getOriginalFilename(), result, properties.modelName(), currentUser.userId());
 
-        String top1 = result.top3().get(0).className();
         log.info("predictedClass={} confidence={} lowConfidence={} inferenceTimeMs={}",
-                top1, result.top3().get(0).confidencePercent(), result.lowConfidence(), result.inferenceTimeMs());
+                result.className(), result.confidencePercent(), result.lowConfidence(), result.inferenceTimeMs());
 
         return ResponseEntity.ok(result);
     }

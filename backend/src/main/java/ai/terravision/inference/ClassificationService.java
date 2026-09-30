@@ -9,7 +9,6 @@ import ai.djl.repository.zoo.Criteria;
 import ai.djl.repository.zoo.ModelNotFoundException;
 import ai.djl.repository.zoo.ZooModel;
 import ai.terravision.config.InferenceProperties;
-import ai.terravision.inference.dto.ClassPrediction;
 import ai.terravision.inference.dto.PredictionResult;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -78,20 +77,15 @@ public class ClassificationService {
         }
         long inferenceTimeMs = System.currentTimeMillis() - start;
 
-        List<Classifications.Classification> top3 = classifications.topK(3);
-        List<ClassPrediction> predictions = top3.stream()
-                .map(c -> {
-                    ClassMetadataService.ClassMetadata meta = metadataService.get(c.getClassName());
-                    double confidencePercent = Math.round(c.getProbability() * 1000) / 10.0;
-                    return new ClassPrediction(c.getClassName(), confidencePercent, meta.description(), meta.emoji());
-                })
-                .toList();
-
-        double topConfidence = top3.get(0).getProbability();
-        boolean lowConfidence = topConfidence < properties.confidenceThreshold();
+        Classifications.Classification top = classifications.best();
+        ClassMetadataService.ClassMetadata meta = metadataService.get(top.getClassName());
+        double confidencePercent = Math.round(top.getProbability() * 1000) / 10.0;
+        boolean lowConfidence = top.getProbability() < properties.confidenceThreshold();
 
         return new PredictionResult(
-                predictions,
+                top.getClassName(),
+                confidencePercent,
+                meta.description(),
                 lowConfidence,
                 lowConfidence ? properties.lowConfidenceMessage() : null,
                 inferenceTimeMs);

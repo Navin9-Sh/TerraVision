@@ -10,7 +10,7 @@
 <body>
 
 <div class="auth-shell">
-    <a href="index.html" class="brand">TerraVision</a>
+    <a href="index.html" class="brand"><span class="brand-logo" data-brand-logo></span><span class="brand-name">TerraVision</span></a>
 
     <div class="auth-card">
         <div class="auth-icon-row">
@@ -43,6 +43,13 @@
         </form>
 
         <p class="switch-link">Don't have an account? <a href="register.html">Register</a></p>
+
+        <div class="role-switch">
+            <a id="roleSwitchLink" href="login.html?intent=admin" class="role-switch-link">
+                <span class="role-switch-icon" id="roleSwitchIcon"></span>
+                <span id="roleSwitchText">Login as Admin</span>
+            </a>
+        </div>
     </div>
 </div>
 
@@ -65,8 +72,13 @@
         document.getElementById('headerIcon').innerHTML = ICONS.shield;
         document.getElementById('heading').textContent = 'Admin sign-in';
         document.getElementById('subtitle').textContent = 'Sign in with an administrator account.';
+        document.getElementById('roleSwitchLink').href = 'login.html';
+        document.getElementById('roleSwitchText').textContent = 'Login as User';
+        document.getElementById('roleSwitchIcon').innerHTML = ICONS.user;
+        document.title = 'Admin log in - TerraVision';
     } else {
         document.getElementById('headerIcon').innerHTML = ICONS.lock;
+        document.getElementById('roleSwitchIcon').innerHTML = ICONS.shield;
     }
 
     const passwordInput = document.getElementById('password');
@@ -96,14 +108,25 @@
 
         try {
             // Identical call regardless of intent=admin/user -- the server is the
-            // only source of truth for role.
+            // only source of truth for role. But which button got them here is a
+            // promise about who's allowed through: the admin entry point must
+            // reject a non-admin account (and vice versa) as if the credentials
+            // were simply wrong, rather than logging them into the wrong side.
             const result = await apiFetch('/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password }),
             });
+
+            const wantsAdmin = isAdminIntent;
+            const isAdmin = result.role === 'ADMIN';
+            if (wantsAdmin !== isAdmin) {
+                throw new Error('Invalid credentials');
+            }
+
             saveSession(result.token, result.email, result.role, result.expiresInSeconds);
-            window.location.href = 'classify.html';
+            // replace(), so Back from the dashboard doesn't return to this login form.
+            window.location.replace(homePageFor(result.role));
         } catch (err) {
             let extra = '';
             if (err.status === 403) {

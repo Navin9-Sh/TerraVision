@@ -1,9 +1,6 @@
 package ai.terravision.admin.dto;
 
-import ai.terravision.inference.dto.ClassPrediction;
-
 import java.time.Instant;
-import java.util.List;
 
 /**
  * Same shape as PredictionHistoryItem plus who it belongs to. userId/ownerEmail are
@@ -17,7 +14,6 @@ public record AdminPredictionItem(
         String filename,
         String predictedClass,
         double confidence,
-        List<ClassPrediction> top3,
         long inferenceTimeMs,
         String modelVersion,
         boolean lowConfidence) {

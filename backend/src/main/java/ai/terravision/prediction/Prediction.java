@@ -36,13 +36,6 @@ public class Prediction {
     @Column(nullable = false)
     private double confidence;
 
-    // Explicit name: Hibernate's default CamelCaseToUnderscoresNamingStrategy doesn't
-    // insert an underscore at a digit-to-uppercase boundary, so "top3Json" would
-    // otherwise map to "top3json", not the "top3_json" column the Flyway migration
-    // actually creates.
-    @Column(name = "top3_json", columnDefinition = "text", nullable = false)
-    private String top3Json;
-
     @Column(nullable = false)
     private long inferenceTimeMs;
 
@@ -64,14 +57,13 @@ public class Prediction {
     }
 
     public Prediction(String imageHash, String filename, String predictedClass, double confidence,
-                       String top3Json, long inferenceTimeMs, String modelVersion, boolean lowConfidence,
+                       long inferenceTimeMs, String modelVersion, boolean lowConfidence,
                        Long userId) {
         this.createdAt = Instant.now();
         this.imageHash = imageHash;
         this.filename = filename;
         this.predictedClass = predictedClass;
         this.confidence = confidence;
-        this.top3Json = top3Json;
         this.inferenceTimeMs = inferenceTimeMs;
         this.modelVersion = modelVersion;
         this.lowConfidence = lowConfidence;
@@ -100,10 +92,6 @@ public class Prediction {
 
     public double getConfidence() {
         return confidence;
-    }
-
-    public String getTop3Json() {
-        return top3Json;
     }
 
     public long getInferenceTimeMs() {

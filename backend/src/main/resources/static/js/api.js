@@ -23,6 +23,13 @@ async function apiFetch(path, options = {}) {
     const text = await response.text();
     const body = text ? JSON.parse(text) : null;
 
+    // A 401 anywhere except the /auth/* endpoints (where it means "wrong password")
+    // means the stored token is expired or rejected: log out instead of leaving the
+    // user on a page whose data can no longer load.
+    if (response.status === 401 && !path.startsWith('/auth/')) {
+        handleUnauthorized();
+    }
+
     if (!response.ok) {
         const message = (body && body.message) || `Request failed (${response.status})`;
         const error = new Error(message);

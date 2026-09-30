@@ -39,9 +39,8 @@ class ClassificationServiceIntegrationTest {
 
             PredictionResult result = service.predict(sample);
 
-            assertThat(result.top3()).hasSize(3);
-            assertThat(result.top3().get(0).confidencePercent())
-                    .isGreaterThanOrEqualTo(result.top3().get(1).confidencePercent());
+            assertThat(result.className()).isNotBlank();
+            assertThat(result.confidencePercent()).isBetween(0.0, 100.0);
             assertThat(result.inferenceTimeMs()).isGreaterThanOrEqualTo(0);
         } finally {
             service.close();

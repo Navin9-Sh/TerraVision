@@ -1,7 +1,6 @@
 package ai.terravision.prediction;
 
 import ai.terravision.inference.dto.PredictionResult;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -18,25 +17,18 @@ import java.time.Instant;
 public class PredictionHistoryService {
 
     private final PredictionRepository repository;
-    private final ObjectMapper objectMapper;
 
-    public PredictionHistoryService(PredictionRepository repository, ObjectMapper objectMapper) {
+    public PredictionHistoryService(PredictionRepository repository) {
         this.repository = repository;
-        this.objectMapper = objectMapper;
     }
 
     public void record(String imageHash, String filename, PredictionResult result, String modelVersion, Long userId) {
         try {
-            String top3Json = objectMapper.writeValueAsString(result.top3());
-            String predictedClass = result.top3().get(0).className();
-            double topConfidence = result.top3().get(0).confidencePercent();
-
             Prediction prediction = new Prediction(
                     imageHash,
                     filename == null ? "unknown" : filename,
-                    predictedClass,
-                    topConfidence,
-                    top3Json,
+                    result.className(),
+                    result.confidencePercent(),
                     result.inferenceTimeMs(),
                     modelVersion,
                     result.lowConfidence(),
