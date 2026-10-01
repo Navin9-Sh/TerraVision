@@ -26,7 +26,9 @@
                 <label for="email">Email</label>
                 <div class="input-icon-wrapper">
                     <span class="input-icon-left" id="mailIcon"></span>
-                    <input type="email" id="email" required autocomplete="email">
+                    <input type="email" id="email" required autocomplete="email"
+                           pattern="[^@\s]+@[^@\s]+\.[A-Za-z]{2,}"
+                           title="Enter a full email address, like name@example.com">
                 </div>
             </div>
             <div class="form-field">
@@ -114,7 +116,8 @@
             });
             window.location.href = `verify-pending.html?email=${encodeURIComponent(email)}`;
         } catch (err) {
-            showError(err.message);
+            // Validation errors arrive as "email: <message>"; show just the message.
+            showError(err.message.replace(/^email:\s*/, ''));
             submitBtn.disabled = false;
             submitBtn.textContent = 'Create account';
         }

@@ -84,6 +84,9 @@ terravision:
     # Short-lived access token; the frontend silently renews it with the refresh token.
     expiration-minutes: 15
     refresh-expiration-days: 7
+  email-validation:
+    # Reject signup emails whose domain can't receive mail (no MX/A record in DNS).
+    dns-check: ${EMAIL_DNS_CHECK:true}
   rate-limit:
     # Per-client request caps on the auth endpoints and /predict (see RateLimitFilter).
     enabled: ${RATE_LIMIT_ENABLED:true}

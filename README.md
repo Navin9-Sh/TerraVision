@@ -62,7 +62,10 @@ an offline export step and never runs alongside the application. The reasoning i
 - Results are cached by the SHA-256 of the image bytes, so a repeat upload returns instantly.
 
 **Accounts and access**
-- Registration with email verification, BCrypt password hashing and stateless JWT login.
+- Registration with email verification, BCrypt password hashing and stateless JWT login. Signup emails
+  must be a well-formed `name@domain.tld` at a domain that **can actually receive mail** (a DNS MX/A
+  lookup, cached), so typos like `name@gmail` or `name@gmial.con` are rejected up front; the emailed
+  verification link then proves the mailbox itself exists.
 - Short-lived access tokens (15 min) renewed silently with single-use **refresh tokens** (rotation, with
   theft detection: replaying a used token revokes the whole session chain). Only token hashes are stored.
 - **Forgot-password / reset** by emailed one-hour, single-use link. The endpoint never reveals which emails
@@ -194,6 +197,7 @@ git-ignored and `.env.example` is the template.
 | `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD` | `prod` profile | PostgreSQL connection. |
 | `SPRING_PROFILES_ACTIVE` | Deployed | Use `prod` in containers. |
 | `RATE_LIMIT_ENABLED` | No | Defaults to `true`. Set `false` only for load testing. |
+| `EMAIL_DNS_CHECK` | No | Defaults to `true`. Set `false` to skip the signup domain lookup (syntax rules still apply). |
 
 Model behaviour is configured under `terravision.inference.*` in
 [application.yml](backend/src/main/resources/application.yml), including the confidence threshold.
@@ -308,14 +312,14 @@ cd backend
 mvn verify
 ```
 
-29 tests, run on every push by [GitHub Actions](.github/workflows/ci.yml) (build, tests, Docker image build):
+64 tests, run on every push by [GitHub Actions](.github/workflows/ci.yml) (build, tests, Docker image build):
 
 - **Integration tests** boot the full application against a real **PostgreSQL container** (Testcontainers,
   Flyway migrations included) with the real model: registration and email verification, login lockout,
   refresh-token rotation and reuse detection, logout, the password-reset flow, `401` vs `403`
   authorization, per-user history scoping, admin visibility and `no-store` caching on HTML pages.
 - **Unit tests** cover the rate limiter (fixed windows on a controllable clock) and its servlet filter,
-  and the image preprocessing.
+  the email validator, and the image preprocessing.
 
 The integration tests need Docker and skip themselves when it isn't available.
 

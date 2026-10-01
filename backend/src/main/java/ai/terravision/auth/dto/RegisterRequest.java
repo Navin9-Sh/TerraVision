@@ -1,10 +1,10 @@
 package ai.terravision.auth.dto;
 
-import jakarta.validation.constraints.Email;
+import ai.terravision.emailcheck.RealEmail;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record RegisterRequest(
-        @NotBlank @Email String email,
+        @NotBlank @RealEmail String email,
         @NotBlank @Size(min = 8, max = 100) String password) {
 }
