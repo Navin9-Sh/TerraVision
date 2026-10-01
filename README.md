@@ -25,6 +25,7 @@
 
 - [Overview](#overview)
 - [Features](#features)
+- [Screenshots](#screenshots)
 - [Tech stack](#tech-stack)
 - [Architecture](#architecture)
 - [Quick start](#quick-start)
@@ -89,6 +90,28 @@ an offline export step and never runs alongside the application. The reasoning i
   dashboard), OpenAPI / Swagger UI, and per-request IDs in every log line.
 - Fail-fast startup: a missing JWT secret or admin credentials stops the app with a clear error
   rather than falling back to something insecure.
+
+## Screenshots
+
+Captured from the application running locally, with accounts and predictions created for these images.
+A hosted demo is not provided: the model needs roughly 600 MB of RAM at idle, more than the free tiers of
+common hosts offer (see [Performance](#performance)). Running it yourself is one command; see
+[Quick start](#quick-start).
+
+| Classification | Low-confidence safeguard |
+|---|---|
+| ![A confident prediction on an aerial photo of farmland](docs/screenshots/classify-result.png) | ![A non-satellite image is flagged instead of presented as a confident answer](docs/screenshots/classify-low-confidence.png) |
+| *A confident prediction, with the class, a description and the confidence.* | *An image that is not a satellite tile gets an explicit warning.* |
+
+| My history | Admin dashboard |
+|---|---|
+| ![Per-user history with statistics, charts, filters and pagination](docs/screenshots/history.png) | ![Admin view of every user and every prediction](docs/screenshots/admin.png) |
+| *Personal statistics, class distribution and a filterable history.* | *All users and all predictions across accounts (admin role only).* |
+
+| Pune district land-cover map | Responsive navigation |
+|---|---|
+| ![Land-cover map of Pune district generated from Sentinel-2 imagery](docs/screenshots/pune-map.png) | ![Mobile navigation menu](docs/screenshots/mobile-menu.png) |
+| *21,980 Sentinel-2 tiles classified at 10 m resolution.* | *The shared navbar collapses into a menu on small screens.* |
 
 ## Tech stack
 
@@ -297,6 +320,7 @@ TerraVision/
 │   ├── model/                     # Exported TorchScript model + class list
 │   └── Dockerfile
 ├── model-export/                  # One-time offline export script (Python)
+├── docs/screenshots/              # Images used in this README
 ├── observability/                 # Prometheus config and Grafana dashboard
 ├── scripts/                       # benchmark.mjs load test
 ├── .github/workflows/ci.yml       # Build, test, Docker image
@@ -340,6 +364,11 @@ only queue. Latency includes the upload, preprocessing, inference and the histor
 of the same image return from the cache in a few milliseconds. These are laptop numbers; a deployed
 instance will differ.
 
+**Memory.** The application uses about 550 MB resident when idle (the JVM and Spring, the libtorch native
+library and the 90 MB model), measured with `docker stats`. Squeezed into a 512 MB container with the
+heap tuned down, it reached 505 MB and became unusable: predictions that normally take 0.2 s stalled.
+Plan for a container with at least 1 GB of RAM; [DEPLOYMENT.md](DEPLOYMENT.md) lists what was ruled out.
+
 ```bash
 # in backend/, so the 30/min per-user predict limit doesn't interfere:
 RATE_LIMIT_ENABLED=false mvn spring-boot:run
@@ -375,7 +404,8 @@ Deliberately out of scope for now, not half-implemented:
 ## Documentation
 
 - [ARCHITECTURE.md](ARCHITECTURE.md): design decisions, including why Spring Boot + DJL instead of a Python backend
-- [DEPLOYMENT.md](DEPLOYMENT.md): Render / Railway deployment and the pre-deployment security checklist
+- [DEPLOYMENT.md](DEPLOYMENT.md): hosting options with the measured memory requirements, Render / Railway
+  deployment, and the pre-deployment security checklist
 
 ## License
 

@@ -97,63 +97,13 @@ Recommended: **Railway (Hobby plan, about $5/month)**. It offers up to 8 GB per 
 straight from the Dockerfile and has managed Postgres. Render works too, but only on a paid plan
 with at least 1 GB of RAM, and its free Postgres is deleted after 30 days.
 
-## Free hosting: Hugging Face Space + Neon (no card)
+**Ruled out after testing**
 
-A Gradio-type Hugging Face Space is free, has 16 GB of RAM and 2 vCPUs, and serves whatever listens on
-port 7860. Docker-type Spaces are paid, so this uses a documented-by-nobody workaround: the Space's
-`app.py` (see [deploy/huggingface/app.py](deploy/huggingface/app.py)) downloads Java, the model and the
-application jar, then replaces itself with Spring Boot on port 7860. It was verified end to end in a
-clean non-root Linux container (login, prediction, pages), but not on Hugging Face itself, and Hugging
-Face could change the rules. Free Spaces sleep after about 48 hours without a visit and wake in about
-a minute.
-
-**Pieces**
-
-| Piece | Where | Cost |
-|---|---|---|
-| App | Hugging Face Space (Gradio SDK) | free |
-| Database | Neon Postgres (free plan) | free |
-| Email | Brevo HTTPS API | free (300/day) |
-| Jar | built by `.github/workflows/release-jar.yml`, published as the `deploy-latest` release | free |
-
-**Steps**
-
-1. **Neon:** create a project at neon.tech. Copy the *direct* connection details (host without
-   `-pooler`), the database name, user and password.
-2. **Jar:** push to `main`. The "Publish deployable jar" workflow builds the Linux jar and publishes it
-   at `https://github.com/Navin9-Sh/TerraVision/releases/tag/deploy-latest`. Confirm `terravision.jar` is
-   attached (Actions tab, then Releases).
-3. **Space:** on huggingface.co choose *New Space*, name `terravision`, SDK **Gradio**, hardware
-   *CPU basic* (free). Keep the generated `README.md`; replace the generated `app.py` with
-   [deploy/huggingface/app.py](deploy/huggingface/app.py) (Files tab, then edit or upload).
-4. **Secrets:** Space *Settings*, *Variables and secrets*. Add these as **secrets**:
-
-   | Name | Value |
-   |---|---|
-   | `SPRING_DATASOURCE_URL` | `jdbc:postgresql://<neon-host>/<db>?sslmode=require` |
-   | `SPRING_DATASOURCE_USERNAME` | Neon user |
-   | `SPRING_DATASOURCE_PASSWORD` | Neon password |
-   | `TERRAVISION_JWT_SECRET` | 32+ random characters |
-   | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | the admin account to seed |
-   | `MAIL_FROM_ADDRESS` | your Brevo-verified sender |
-   | `BREVO_API_KEY` | Brevo API key (`xkeysib-...`) |
-   | `APP_BASE_URL` | `https://<owner>-terravision.hf.space` |
-
-5. The Space builds and starts (first boot downloads about 350 MB and takes a few minutes). Open
-   `https://<owner>-terravision.hf.space`, then `/api/v1/health`.
-
-**Notes**
-
-- **ZeroGPU:** accounts without Hugging Face PRO can only create ZeroGPU Spaces, which are shut down
-  with "No @spaces.GPU function detected during startup" unless the code registers one. `app.py`
-  registers an unused `@spaces.GPU` function for that reason (it does nothing on other hardware) and
-  runs Java as a child process so the Python process stays alive. The model itself runs on the CPU.
-- Every restart of the Space downloads the latest jar, so pushing to `main` and restarting the Space
-  deploys a new version.
-- The Space's disk is not persistent. That is fine: users, predictions and tokens live in Neon, and
-  Neon scales to zero when idle (the first request after a pause is a little slower).
-- Rate limiting identifies clients by IP. If the logs show every user sharing one key, the Space's proxy is
-  not being trusted as a forwarder; see `server.forward-headers-strategy` in `application.yml`.
+- **Render free and Starter (512 MB):** the app reached 505 of 512 MB under a 512 MB limit and then stalled.
+- **Hugging Face Spaces:** Docker Spaces are a paid feature. A Gradio-type (ZeroGPU) Space can start
+  the application, but the platform stops any process that is not a Gradio app about two seconds after
+  startup, even with the placeholder `@spaces.GPU` function it asks for.
+- **Azure:** only free for students with an unused credit; otherwise it is billed.
 
 ## Railway, step by step
 
