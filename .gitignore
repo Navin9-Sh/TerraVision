@@ -34,4 +34,4 @@ Thumbs.db
 # not a real submodule) and a 91 MB checkpoint that duplicates the traced model
 # already committed under backend/model/ -- shipping it here would ~triple this
 # repo's binary weight for content a portfolio viewer doesn't need to clone.
-TerraVision/
+/TerraVision/
