@@ -390,6 +390,12 @@ Grafana is at http://localhost:3000 (login `admin` / `admin`; change it with `GR
 Prometheus at http://localhost:9090. The "TerraVision overview" dashboard shows request rate, latency
 percentiles, model time, error rate, predictions by class, JVM heap, CPU and DB connections.
 
+![The TerraVision overview dashboard in Grafana, showing request rate, latency percentiles, model time, error rate, predictions by class, JVM heap, CPU and database connections](docs/screenshots/grafana-dashboard.png)
+
+*Captured under a synthetic load of mixed requests (predictions, history and stats calls, plus deliberate
+401 and 404 responses). Latencies here are higher than in the benchmark above because the load generator,
+the app and Grafana all shared one laptop.*
+
 ## Roadmap
 
 Deliberately out of scope for now, not half-implemented:

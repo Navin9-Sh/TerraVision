@@ -33,14 +33,27 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(increase(terravision_predictions_total[24h]))",
+          "expr": "round(sum(increase(terravision_predictions_total[24h])))",
           "legendFormat": "",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#b5502e"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#b5502e",
+                "value": null
+              }
+            ]
+          }
         },
         "overrides": []
       },
@@ -83,7 +96,20 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "percentunit"
+          "unit": "percentunit",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#b5502e"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#b5502e",
+                "value": null
+              }
+            ]
+          }
         },
         "overrides": []
       },
@@ -126,7 +152,20 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "s"
+          "unit": "s",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#b5502e"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#b5502e",
+                "value": null
+              }
+            ]
+          }
         },
         "overrides": []
       },
@@ -162,14 +201,30 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[5m])) / sum(rate(http_server_requests_seconds_count[5m]))",
+          "expr": "(sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[5m])) or vector(0)) / sum(rate(http_server_requests_seconds_count[5m]))",
           "legendFormat": "",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "percentunit"
+          "unit": "percentunit",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0.01
+              }
+            ]
+          }
         },
         "overrides": []
       },
@@ -212,7 +267,14 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps"
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "fillOpacity": 8,
+            "spanNulls": true
+          }
         },
         "overrides": []
       }
@@ -262,7 +324,14 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "s"
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "fillOpacity": 8,
+            "spanNulls": true
+          }
         },
         "overrides": []
       }
@@ -303,7 +372,14 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "s"
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "fillOpacity": 8,
+            "spanNulls": true
+          }
         },
         "overrides": []
       },
@@ -329,16 +405,48 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (class) (increase(terravision_predictions_total[1h]))",
+          "expr": "round(sum by (class) (increase(terravision_predictions_total[1h])))",
           "legendFormat": "{{class}}",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#b5502e"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#b5502e",
+                "value": null
+              }
+            ]
+          }
         },
         "overrides": []
+      },
+      "options": {
+        "displayMode": "basic",
+        "orientation": "horizontal",
+        "showUnfilled": true,
+        "valueMode": "color",
+        "namePlacement": "left",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "titleSize": 13,
+          "valueSize": 26
+        },
+        "minVizWidth": 0
       }
     },
     {
@@ -377,7 +485,14 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "bytes"
+          "unit": "bytes",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "fillOpacity": 8,
+            "spanNulls": true
+          }
         },
         "overrides": []
       }
@@ -418,7 +533,14 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "percentunit"
+          "unit": "percentunit",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "fillOpacity": 8,
+            "spanNulls": true
+          }
         },
         "overrides": []
       }
@@ -468,7 +590,14 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "fillOpacity": 8,
+            "spanNulls": true
+          }
         },
         "overrides": []
       }
