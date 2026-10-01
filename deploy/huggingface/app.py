@@ -2,7 +2,8 @@
 
 A Gradio-type Space runs `python app.py` and serves whatever listens on port 7860. This
 file never uses Gradio: it downloads a Java runtime, the application jar and the model,
-then replaces itself with the JVM running Spring Boot on that port.
+then runs the JVM with Spring Boot on that port as a child process and stays alive to
+supervise it.
 
 Only the Python standard library is used. Configuration (database, secrets) comes from
 the Space's "Variables and secrets" settings, which arrive as environment variables.
@@ -10,10 +11,26 @@ the Space's "Variables and secrets" settings, which arrive as environment variab
 import os
 import pathlib
 import shutil
+import signal
+import subprocess
 import sys
 import tarfile
 import time
 import urllib.request
+
+# Free accounts can only create ZeroGPU Spaces, and Hugging Face refuses to keep a
+# ZeroGPU Space running unless it registers a @spaces.GPU function ("No @spaces.GPU
+# function detected during startup"). This app never uses a GPU; the function below
+# exists only to satisfy that check. On any other kind of Space the import simply fails
+# and nothing happens.
+try:
+    import spaces
+
+    @spaces.GPU
+    def _unused_gpu_function():
+        return None
+except Exception:
+    pass
 
 HOME = pathlib.Path(os.environ.get("TERRAVISION_HOME", pathlib.Path(__file__).resolve().parent / "runtime"))
 REPO = os.environ.get("TERRAVISION_REPO", "Navin9-Sh/TerraVision")
@@ -132,8 +149,16 @@ def main():
     (HOME / "tmp").mkdir(exist_ok=True)
 
     log("starting Spring Boot on port " + PORT)
-    os.chdir(HOME)  # the app loads ./model relative to its working directory
-    os.execve(command[0], command, env)
+    # A child process, not exec(): this Python process has to stay alive for the Space's
+    # supervisor. cwd=HOME because the app loads ./model relative to its working directory.
+    child = subprocess.Popen(command, cwd=str(HOME), env=env)
+
+    def forward(signum, _frame):
+        child.send_signal(signum)
+
+    signal.signal(signal.SIGTERM, forward)
+    signal.signal(signal.SIGINT, forward)
+    sys.exit(child.wait())
 
 
 if __name__ == "__main__":

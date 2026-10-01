@@ -144,6 +144,10 @@ a minute.
 
 **Notes**
 
+- **ZeroGPU:** accounts without Hugging Face PRO can only create ZeroGPU Spaces, which are shut down
+  with "No @spaces.GPU function detected during startup" unless the code registers one. `app.py`
+  registers an unused `@spaces.GPU` function for that reason (it does nothing on other hardware) and
+  runs Java as a child process so the Python process stays alive. The model itself runs on the CPU.
 - Every restart of the Space downloads the latest jar, so pushing to `main` and restarting the Space
   deploys a new version.
 - The Space's disk is not persistent. That is fine: users, predictions and tokens live in Neon, and
