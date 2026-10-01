@@ -38,6 +38,18 @@ public class User {
     @Column
     private Instant verificationTokenExpiresAt;
 
+    @Column(nullable = false)
+    private int failedLoginAttempts;
+
+    @Column
+    private Instant lockedUntil;
+
+    @Column
+    private String passwordResetTokenHash;
+
+    @Column
+    private Instant passwordResetExpiresAt;
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -66,6 +78,49 @@ public class User {
         this.emailVerified = true;
         this.verificationToken = null;
         this.verificationTokenExpiresAt = null;
+    }
+
+    public boolean isLocked() {
+        return lockedUntil != null && Instant.now().isBefore(lockedUntil);
+    }
+
+    public Instant getLockedUntil() {
+        return lockedUntil;
+    }
+
+    /** Counts a wrong password; once maxAttempts is reached the account locks for lockFor. */
+    public void recordFailedLogin(int maxAttempts, java.time.Duration lockFor) {
+        this.failedLoginAttempts++;
+        if (failedLoginAttempts >= maxAttempts) {
+            this.lockedUntil = Instant.now().plus(lockFor);
+            this.failedLoginAttempts = 0;
+        }
+    }
+
+    public void clearLoginFailures() {
+        this.failedLoginAttempts = 0;
+        this.lockedUntil = null;
+    }
+
+    public int getFailedLoginAttempts() {
+        return failedLoginAttempts;
+    }
+
+    public void issuePasswordReset(String tokenHash, Instant expiresAt) {
+        this.passwordResetTokenHash = tokenHash;
+        this.passwordResetExpiresAt = expiresAt;
+    }
+
+    public boolean isPasswordResetExpired() {
+        return passwordResetExpiresAt == null || Instant.now().isAfter(passwordResetExpiresAt);
+    }
+
+    /** Sets the new password and consumes the reset token (single use); also lifts any lockout. */
+    public void completePasswordReset(String newPasswordHash) {
+        this.passwordHash = newPasswordHash;
+        this.passwordResetTokenHash = null;
+        this.passwordResetExpiresAt = null;
+        clearLoginFailures();
     }
 
     public Long getId() {

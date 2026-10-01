@@ -2,9 +2,21 @@ const AUTH_STORAGE_KEY = 'terravision.auth';
 const USER_LOGIN_PAGE = 'login.html';
 const ADMIN_LOGIN_PAGE = 'login.html?intent=admin';
 
-function saveSession(token, email, role, expiresInSeconds) {
-    const expiresAt = Date.now() + expiresInSeconds * 1000;
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ token, email, role, expiresAt }));
+/**
+ * expiresAt is when the short-lived access token stops working; refreshExpiresAt is when
+ * the whole session ends (the refresh token lapses). A session stays valid, and the access
+ * token is renewed silently, until refreshExpiresAt.
+ */
+function saveSession(token, email, role, expiresInSeconds, refreshToken, refreshExpiresInSeconds) {
+    const now = Date.now();
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({
+        token,
+        email,
+        role,
+        expiresAt: now + expiresInSeconds * 1000,
+        refreshToken: refreshToken || null,
+        refreshExpiresAt: refreshToken ? now + refreshExpiresInSeconds * 1000 : null,
+    }));
 }
 
 /** Removes the JWT and the cached email/role -- everything the frontend keeps about the user. */
@@ -23,7 +35,8 @@ function getSession() {
         if (!raw) return null;
         const session = JSON.parse(raw);
         const looksLikeJwt = typeof session.token === 'string' && session.token.split('.').length === 3;
-        if (!looksLikeJwt || !session.email || !session.role || !(Date.now() < session.expiresAt)) {
+        const sessionEndsAt = session.refreshExpiresAt || session.expiresAt;
+        if (!looksLikeJwt || !session.email || !session.role || !(Date.now() < sessionEndsAt)) {
             clearSession();
             return null;
         }
@@ -48,7 +61,65 @@ function homePageFor(role) {
 function logout() {
     const session = getSession();
     clearSession();
+    if (session && session.refreshToken) {
+        // Best effort: revoke the refresh token server-side so a copied token is useless.
+        fetch('/api/v1/auth/logout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refreshToken: session.refreshToken }),
+            keepalive: true,
+        }).catch(() => {});
+    }
     window.location.replace(session && session.role === 'ADMIN' ? ADMIN_LOGIN_PAGE : USER_LOGIN_PAGE);
+}
+
+let refreshInFlight = null;
+
+/**
+ * Trades the refresh token for a new access token (and a new refresh token -- they're
+ * single-use). Shared by concurrent callers, and serialized across tabs with the Web
+ * Locks API, because two tabs presenting the same refresh token would look like token
+ * theft to the server. Resolves to the renewed session, or null if it can't be renewed.
+ */
+function refreshSession() {
+    if (refreshInFlight) return refreshInFlight;
+
+    const run = async () => {
+        const current = getSession();
+        if (!current || !current.refreshToken) return null;
+        // Another tab may have refreshed while we waited for the lock.
+        if (Date.now() < current.expiresAt - 30000) return current;
+
+        try {
+            const response = await fetch('/api/v1/auth/refresh', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ refreshToken: current.refreshToken }),
+            });
+            if (!response.ok) {
+                if (response.status === 401 || response.status === 400) clearSession();
+                return null;
+            }
+            const r = await response.json();
+            saveSession(r.token, r.email, r.role, r.expiresInSeconds, r.refreshToken, r.refreshExpiresInSeconds);
+            return getSession();
+        } catch (e) {
+            return null; // network trouble: keep the session, the caller can retry later
+        }
+    };
+
+    const locked = navigator.locks ? navigator.locks.request('terravision-refresh', run) : run();
+    refreshInFlight = locked.finally(() => { refreshInFlight = null; });
+    return refreshInFlight;
+}
+
+/** The access token to put on a request, renewing it first if it's about to expire. */
+async function getValidAccessToken() {
+    const session = getSession();
+    if (!session) return null;
+    if (!session.refreshToken || Date.now() < session.expiresAt - 30000) return session.token;
+    const renewed = await refreshSession();
+    return renewed ? renewed.token : null;
 }
 
 /** For a 401 from the API: the stored token is no longer accepted, so treat it as logged out. */

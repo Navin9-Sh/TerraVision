@@ -55,4 +55,8 @@ public class JwtService {
     public long expirationSeconds() {
         return properties.expirationMinutes() * 60;
     }
+
+    public long refreshExpirationSeconds() {
+        return properties.refreshExpirationDays() * 24 * 3600;
+    }
 }

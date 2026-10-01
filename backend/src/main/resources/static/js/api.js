@@ -8,13 +8,30 @@ const API_BASE = '/api/v1';
  * decides what a failure means for its own page instead.
  */
 async function apiFetch(path, options = {}) {
-    const session = getSession();
-    const headers = Object.assign({}, options.headers || {});
-    if (session) {
-        headers['Authorization'] = `Bearer ${session.token}`;
+    const isAuthPath = path.startsWith('/auth/');
+    const { _retried, ...fetchOptions } = options;
+    const headers = Object.assign({}, fetchOptions.headers || {});
+
+    if (!isAuthPath) {
+        const token = await getValidAccessToken();
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        } else if (getSession() === null) {
+            handleUnauthorized();
+            throw Object.assign(new Error('Your session has ended. Please log in again.'), { status: 401 });
+        }
     }
 
-    const response = await fetch(API_BASE + path, { ...options, headers });
+    const response = await fetch(API_BASE + path, { ...fetchOptions, headers });
+
+    // Access token rejected despite looking valid (e.g. revoked server-side): renew once
+    // and retry before giving up.
+    if (response.status === 401 && !isAuthPath && !_retried) {
+        const renewed = await refreshSession();
+        if (renewed) {
+            return apiFetch(path, { ...options, _retried: true });
+        }
+    }
 
     // Read as text first and parse only if non-empty: some endpoints correctly
     // return an empty body on success (e.g. 201 from /auth/register) or on error,

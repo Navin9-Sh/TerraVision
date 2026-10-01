@@ -1,6 +1,9 @@
 package ai.terravision.security;
 
 import ai.terravision.auth.JwtAuthFilter;
+import ai.terravision.ratelimit.RateLimitFilter;
+import ai.terravision.ratelimit.RateLimitProperties;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -23,7 +26,13 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter,
+                                                    ObjectMapper objectMapper, RateLimitProperties rateLimitProperties)
+            throws Exception {
+        // Built here rather than as a @Component so it only runs inside this chain, after
+        // the JWT filter has identified the caller.
+        RateLimitFilter rateLimitFilter = new RateLimitFilter(objectMapper, rateLimitProperties.enabled());
+
         http
                 // Stateless JSON API with no browser session/cookie to protect -- CSRF
                 // protection exists specifically for cookie-authenticated browser state.
@@ -47,7 +56,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/**").authenticated()
                         .anyRequest().permitAll())
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(rateLimitFilter, JwtAuthFilter.class);
         return http.build();
     }
 }

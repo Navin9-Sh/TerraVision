@@ -6,6 +6,7 @@ import ai.terravision.common.Sha256;
 import ai.terravision.config.InferenceProperties;
 import ai.terravision.inference.dto.PredictionResult;
 import ai.terravision.prediction.PredictionHistoryService;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -38,13 +39,16 @@ public class PredictionController {
     private final ClassificationService classificationService;
     private final PredictionHistoryService historyService;
     private final InferenceProperties properties;
+    private final MeterRegistry meterRegistry;
 
     public PredictionController(ClassificationService classificationService,
                                  PredictionHistoryService historyService,
-                                 InferenceProperties properties) {
+                                 InferenceProperties properties,
+                                 MeterRegistry meterRegistry) {
         this.classificationService = classificationService;
         this.historyService = historyService;
         this.properties = properties;
+        this.meterRegistry = meterRegistry;
     }
 
     @Operation(summary = "Classify an uploaded image",
@@ -61,6 +65,10 @@ public class PredictionController {
         String imageHash = Sha256.hash(bytes);
         PredictionResult result = classificationService.predictCached(imageHash, bytes);
         historyService.record(imageHash, image.getOriginalFilename(), result, properties.modelName(), currentUser.userId());
+
+        meterRegistry.counter("terravision.predictions",
+                "class", result.className(),
+                "lowConfidence", String.valueOf(result.lowConfidence())).increment();
 
         log.info("predictedClass={} confidence={} lowConfidence={} inferenceTimeMs={}",
                 result.className(), result.confidencePercent(), result.lowConfidence(), result.inferenceTimeMs());

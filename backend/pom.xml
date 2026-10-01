@@ -20,6 +20,8 @@
     <properties>
         <java.version>21</java.version>
         <djl.version>0.29.0</djl.version>
+        <!-- Newer than Spring Boot 3.3's default: the older docker-java client is rejected by recent Docker Engines. -->
+        <testcontainers.version>1.21.3</testcontainers.version>
     </properties>
 
     <dependencyManagement>
@@ -159,6 +161,23 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- Real PostgreSQL in a throwaway container for integration tests (needs Docker). -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -166,6 +185,19 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!-- Lets Mockito's Byte Buddy run on JDKs newer than it officially knows (local JDK 25/26). -->
+                    <argLine>-Dnet.bytebuddy.experimental=true</argLine>
+                    <systemPropertyVariables>
+                        <!-- Testcontainers' bundled docker-java asks for an API version that Docker Engine 29+
+                             rejects (min 1.44); pinning it keeps the integration tests runnable on current Docker. -->
+                        <api.version>1.44</api.version>
+                    </systemPropertyVariables>
+                </configuration>
             </plugin>
         </plugins>
     </build>

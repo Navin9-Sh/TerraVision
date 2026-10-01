@@ -30,7 +30,8 @@ class ClassificationServiceIntegrationTest {
         InferenceProperties properties = new InferenceProperties(
                 MODEL_DIR.toString(), "terravision-resnet50", 0.5, "low confidence");
         ClassMetadataService metadataService = new ClassMetadataService(new ObjectMapper());
-        ClassificationService service = new ClassificationService(properties, metadataService, new ObjectMapper());
+        ClassificationService service = new ClassificationService(properties, metadataService, new ObjectMapper(),
+                new io.micrometer.core.instrument.simple.SimpleMeterRegistry());
         service.loadModel();
 
         try (InputStream sample = getClass().getResourceAsStream("/sample-tile.jpg")) {

@@ -11,6 +11,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     Optional<User> findByVerificationToken(String token);
 
+    Optional<User> findByPasswordResetTokenHash(String tokenHash);
+
     boolean existsByEmail(String email);
 
     long countByRole(Role role);

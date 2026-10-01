@@ -9,6 +9,10 @@ public final class Sha256 {
     private Sha256() {
     }
 
+    public static String hash(String text) {
+        return hash(text.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    }
+
     public static String hash(byte[] data) {
         try {
             byte[] digest = MessageDigest.getInstance("SHA-256").digest(data);

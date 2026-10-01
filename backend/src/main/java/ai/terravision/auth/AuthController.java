@@ -1,10 +1,14 @@
 package ai.terravision.auth;
 
+import ai.terravision.auth.dto.ForgotPasswordRequest;
 import ai.terravision.auth.dto.LoginRequest;
 import ai.terravision.auth.dto.LoginResponse;
+import ai.terravision.auth.dto.RefreshRequest;
 import ai.terravision.auth.dto.RegisterRequest;
 import ai.terravision.auth.dto.ResendVerificationRequest;
+import ai.terravision.auth.dto.ResetPasswordRequest;
 import ai.terravision.mail.MailProperties;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
@@ -61,5 +65,34 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request.email(), request.password()));
+    }
+
+    @Operation(summary = "Exchange a refresh token for a new access + refresh token pair",
+            description = "Refresh tokens are single-use: the one sent here is revoked and replaced.")
+    @PostMapping("/refresh")
+    public ResponseEntity<LoginResponse> refresh(@Valid @RequestBody RefreshRequest request) {
+        return ResponseEntity.ok(authService.refresh(request.refreshToken()));
+    }
+
+    @Operation(summary = "Revoke a refresh token (log out)")
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@Valid @RequestBody RefreshRequest request) {
+        authService.logout(request.refreshToken());
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Email a password-reset link",
+            description = "Always returns 202, whether or not the email has an account.")
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.requestPasswordReset(request.email());
+        return ResponseEntity.accepted().build();
+    }
+
+    @Operation(summary = "Set a new password using an emailed reset token")
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request.token(), request.newPassword());
+        return ResponseEntity.noContent().build();
     }
 }

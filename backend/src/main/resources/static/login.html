@@ -42,6 +42,7 @@
             <button type="submit" class="btn-primary" id="submitBtn">Log in</button>
         </form>
 
+        <p class="switch-link"><a href="forgot-password.html">Forgot password?</a></p>
         <p class="switch-link">Don't have an account? <a href="register.html">Register</a></p>
 
         <div class="role-switch">
@@ -124,7 +125,8 @@
                 throw new Error('Invalid credentials');
             }
 
-            saveSession(result.token, result.email, result.role, result.expiresInSeconds);
+            saveSession(result.token, result.email, result.role, result.expiresInSeconds,
+                result.refreshToken, result.refreshExpiresInSeconds);
             // replace(), so Back from the dashboard doesn't return to this login form.
             window.location.replace(homePageFor(result.role));
         } catch (err) {

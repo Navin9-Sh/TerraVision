@@ -16,18 +16,17 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Sends the account-verification email. Uses Brevo's HTTPS API when BREVO_API_KEY is set
- * (works on hosts that block outbound SMTP), otherwise the configured SMTP relay via
- * JavaMailSender (local development). Kept as its own service, not inlined into
- * AuthService, so the "what does the email say" concern is separate from "what makes an
- * account valid to log into."
+ * Sends the account emails (verification, password reset). Uses Brevo's HTTPS API when
+ * BREVO_API_KEY is set (works on hosts that block outbound SMTP), otherwise the
+ * configured SMTP relay via JavaMailSender (local development). Kept as its own service,
+ * not inlined into AuthService, so "what does the email say" stays separate from "what
+ * makes an account valid to log into."
  */
 @Service
-public class VerificationMailService {
+public class AccountMailService {
 
-    private static final Logger log = LoggerFactory.getLogger(VerificationMailService.class);
+    private static final Logger log = LoggerFactory.getLogger(AccountMailService.class);
     private static final URI BREVO_SEND_URI = URI.create("https://api.brevo.com/v3/smtp/email");
-    private static final String SUBJECT = "Verify your TerraVision account";
 
     private final JavaMailSender mailSender;
     private final MailProperties properties;
@@ -36,7 +35,7 @@ public class VerificationMailService {
             .connectTimeout(Duration.ofSeconds(10))
             .build();
 
-    public VerificationMailService(JavaMailSender mailSender, MailProperties properties, ObjectMapper objectMapper) {
+    public AccountMailService(JavaMailSender mailSender, MailProperties properties, ObjectMapper objectMapper) {
         this.mailSender = mailSender;
         this.properties = properties;
         this.objectMapper = objectMapper;
@@ -44,7 +43,7 @@ public class VerificationMailService {
 
     public void sendVerificationEmail(String toEmail, String token) {
         String verifyUrl = properties.appBaseUrl() + "/api/v1/auth/verify?token=" + token;
-        String body = """
+        send(toEmail, "Verify your TerraVision account", """
                 Welcome to TerraVision.
 
                 Click the link below to verify your email address. This link expires in 24 hours.
@@ -52,37 +51,53 @@ public class VerificationMailService {
                 %s
 
                 If you didn't create this account, you can ignore this email.
-                """.formatted(verifyUrl);
+                """.formatted(verifyUrl));
+    }
 
+    public void sendPasswordResetEmail(String toEmail, String token) {
+        String resetUrl = properties.appBaseUrl() + "/reset-password.html?token=" + token;
+        send(toEmail, "Reset your TerraVision password", """
+                We received a request to reset the password for your TerraVision account.
+
+                Click the link below to choose a new password. This link expires in 1 hour and
+                can be used once.
+
+                %s
+
+                If you didn't ask for this, you can ignore this email; your password won't change.
+                """.formatted(resetUrl));
+    }
+
+    private void send(String toEmail, String subject, String body) {
         try {
             if (properties.brevoApiKey() != null && !properties.brevoApiKey().isBlank()) {
-                sendViaBrevoApi(toEmail, body);
+                sendViaBrevoApi(toEmail, subject, body);
             } else {
-                sendViaSmtp(toEmail, body);
+                sendViaSmtp(toEmail, subject, body);
             }
         } catch (Exception e) {
-            // Deliberately does not fail registration: the account is created either way,
-            // and /api/v1/auth/resend-verification lets the user retry if the first send
-            // failed (e.g. transient provider issue). Logged at ERROR since a silently
-            // undelivered verification email is a real support problem otherwise.
-            log.error("Failed to send verification email to {}", toEmail, e);
+            // Deliberately does not fail the calling request: for registration the account
+            // is created either way and /resend-verification lets the user retry; for a
+            // password reset, failing loudly would reveal whether an account exists. Logged
+            // at ERROR since a silently undelivered email is a real support problem.
+            log.error("Failed to send '{}' email to {}", subject, toEmail, e);
         }
     }
 
-    private void sendViaSmtp(String toEmail, String body) {
+    private void sendViaSmtp(String toEmail, String subject, String body) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(properties.fromAddress());
         message.setTo(toEmail);
-        message.setSubject(SUBJECT);
+        message.setSubject(subject);
         message.setText(body);
         mailSender.send(message);
     }
 
-    private void sendViaBrevoApi(String toEmail, String body) throws Exception {
+    private void sendViaBrevoApi(String toEmail, String subject, String body) throws Exception {
         String json = objectMapper.writeValueAsString(Map.of(
                 "sender", Map.of("email", properties.fromAddress(), "name", "TerraVision"),
                 "to", List.of(Map.of("email", toEmail)),
-                "subject", SUBJECT,
+                "subject", subject,
                 "textContent", body));
 
         HttpRequest request = HttpRequest.newBuilder(BREVO_SEND_URI)

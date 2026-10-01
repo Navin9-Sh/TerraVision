@@ -12,6 +12,8 @@ import ai.terravision.config.InferenceProperties;
 import ai.terravision.inference.dto.PredictionResult;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.springframework.cache.annotation.Cacheable;
@@ -36,14 +38,22 @@ public class ClassificationService {
     private final ClassMetadataService metadataService;
     private final ObjectMapper objectMapper;
 
+    private final Timer inferenceTimer;
+
     private ZooModel<Image, Classifications> model;
 
     public ClassificationService(InferenceProperties properties,
                                   ClassMetadataService metadataService,
-                                  ObjectMapper objectMapper) {
+                                  ObjectMapper objectMapper,
+                                  MeterRegistry meterRegistry) {
         this.properties = properties;
         this.metadataService = metadataService;
         this.objectMapper = objectMapper;
+        // Time spent in the model itself (cache hits never reach it), exposed to Prometheus.
+        this.inferenceTimer = Timer.builder("terravision.inference")
+                .description("Model inference time")
+                .publishPercentileHistogram()
+                .register(meterRegistry);
     }
 
     @PostConstruct
@@ -76,6 +86,7 @@ public class ClassificationService {
             throw new IOException("Inference failed", e);
         }
         long inferenceTimeMs = System.currentTimeMillis() - start;
+        inferenceTimer.record(java.time.Duration.ofMillis(inferenceTimeMs));
 
         Classifications.Classification top = classifications.best();
         ClassMetadataService.ClassMetadata meta = metadataService.get(top.getClassName());
