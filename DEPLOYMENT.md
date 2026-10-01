@@ -118,8 +118,9 @@ a minute.
 
 **Steps**
 
-1. **Neon:** create a project at neon.tech. Copy the *direct* connection details (host without
-   `-pooler`), the database name, user and password.
+1. **Neon:** create a project at neon.tech. Click **Connect**, turn **Connection pooling off**
+   (the host must not contain `-pooler`), and copy the connection string
+   (`postgresql://user:password@host/db?sslmode=require`).
 2. **Jar:** push to `main`. The "Publish deployable jar" workflow builds the Linux jar and publishes it
    at `https://github.com/Navin9-Sh/TerraVision/releases/tag/deploy-latest`. Confirm `terravision.jar` is
    attached (Actions tab, then Releases).
@@ -130,9 +131,7 @@ a minute.
 
    | Name | Value |
    |---|---|
-   | `SPRING_DATASOURCE_URL` | `jdbc:postgresql://<neon-host>/<db>?sslmode=require` |
-   | `SPRING_DATASOURCE_USERNAME` | Neon user |
-   | `SPRING_DATASOURCE_PASSWORD` | Neon password |
+   | `DATABASE_URL` | the Neon connection string, pasted exactly as copied |
    | `TERRAVISION_JWT_SECRET` | 32+ random characters |
    | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | the admin account to seed |
    | `MAIL_FROM_ADDRESS` | your Brevo-verified sender |
@@ -144,6 +143,9 @@ a minute.
 
 **Notes**
 
+- `DATABASE_URL` is converted to a JDBC URL, username and password at startup
+  (`DatabaseUrlConverter`), so there is nothing to split by hand. Setting `SPRING_DATASOURCE_URL`,
+  `SPRING_DATASOURCE_USERNAME` and `SPRING_DATASOURCE_PASSWORD` separately also still works.
 - Every restart of the Space downloads the latest jar, so pushing to `main` and restarting the Space
   deploys a new version.
 - The Space's disk is not persistent. That is fine: users, predictions and tokens live in Neon, and

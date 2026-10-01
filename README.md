@@ -194,7 +194,8 @@ git-ignored and `.env.example` is the template.
 | `BREVO_API_KEY` | For email on cloud hosts | Brevo API key. Sends email over HTTPS, which works where SMTP ports are blocked. Takes precedence over SMTP when set. |
 | `BREVO_SMTP_USERNAME`, `BREVO_SMTP_PASSWORD` | For email locally | Brevo SMTP login and key (used only when `BREVO_API_KEY` is empty). |
 | `APP_BASE_URL` | Deployed | Public URL used to build verification links. Default `http://localhost:8080`. |
-| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD` | `prod` profile | PostgreSQL connection. |
+| `DATABASE_URL` | `prod` profile | PostgreSQL connection as one provider-style string (`postgresql://user:pass@host/db?sslmode=require`). Takes precedence over the `DB_*` variables. |
+| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD` | `prod` profile | PostgreSQL connection as separate parts (alternative to `DATABASE_URL`). |
 | `SPRING_PROFILES_ACTIVE` | Deployed | Use `prod` in containers. |
 | `RATE_LIMIT_ENABLED` | No | Defaults to `true`. Set `false` only for load testing. |
 | `EMAIL_DNS_CHECK` | No | Defaults to `true`. Set `false` to skip the signup domain lookup (syntax rules still apply). |
