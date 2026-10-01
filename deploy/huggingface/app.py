@@ -29,8 +29,10 @@ try:
     @spaces.GPU
     def _unused_gpu_function():
         return None
-except Exception:
-    pass
+
+    print("[launcher] registered an unused @spaces.GPU function", flush=True)
+except Exception as error:  # not a ZeroGPU Space, or the package is unavailable
+    print(f"[launcher] no @spaces.GPU function registered: {error!r}", flush=True)
 
 HOME = pathlib.Path(os.environ.get("TERRAVISION_HOME", pathlib.Path(__file__).resolve().parent / "runtime"))
 REPO = os.environ.get("TERRAVISION_REPO", "Navin9-Sh/TerraVision")
