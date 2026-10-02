@@ -9,12 +9,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-/**
- * Marks every static HTML page no-store so the browser never serves a protected page
- * from its HTTP cache or back/forward cache after logout. The 10 MB Pune map document
- * is a sub-resource of pune-map.html (an iframe, not a page anyone navigates back to)
- * and holds no user data, so it stays cacheable.
- */
 @Component
 public class NoCacheHtmlFilter extends OncePerRequestFilter {
 

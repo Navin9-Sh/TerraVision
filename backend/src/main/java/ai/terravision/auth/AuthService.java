@@ -81,10 +81,6 @@ public class AuthService {
                 .orElse(false);
     }
 
-    /**
-     * Deliberately not @Transactional: a failed login must persist its attempt counter,
-     * and an exception thrown inside a transaction would roll that update back.
-     */
     public LoginResponse login(String email, String rawPassword) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
@@ -101,8 +97,6 @@ public class AuthService {
             throw new UnauthorizedException("Invalid email or password");
         }
 
-        // Rejected unconditionally: there is no path from "correct password, unverified
-        // email" to a valid session, regardless of any other state.
         if (!user.isEmailVerified()) {
             throw new ForbiddenException("Please verify your email before logging in");
         }
@@ -114,7 +108,6 @@ public class AuthService {
         return issueSession(user);
     }
 
-    /** Exchanges a valid refresh token for a new access token and a new (rotated) refresh token. */
     public LoginResponse refresh(String rawRefreshToken) {
         Long userId = refreshTokenService.consume(rawRefreshToken);
         User user = userRepository.findById(userId)
@@ -128,10 +121,6 @@ public class AuthService {
         }
     }
 
-    /**
-     * Always completes silently, whether or not the email has an account, so the endpoint
-     * can't be used to discover which emails are registered.
-     */
     @Transactional
     public void requestPasswordReset(String email) {
         userRepository.findByEmail(email).ifPresent(user -> {
@@ -152,7 +141,6 @@ public class AuthService {
 
         user.completePasswordReset(passwordEncoder.encode(newPassword));
         userRepository.save(user);
-        // A password reset ends every existing session of that account.
         refreshTokenService.revokeAllForUser(user.getId());
     }
 

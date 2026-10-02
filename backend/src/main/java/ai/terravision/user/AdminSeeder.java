@@ -7,12 +7,6 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-/**
- * Creates exactly one ADMIN account on first startup, from env vars rather than a
- * hardcoded credential in source. Only acts when zero ADMIN accounts exist yet --
- * every subsequent startup is a no-op, so ADMIN_EMAIL/ADMIN_PASSWORD don't need to
- * stay set (or correct) after the first run.
- */
 @Component
 public class AdminSeeder implements ApplicationRunner {
 

@@ -1,10 +1,3 @@
-// Load test for POST /api/v1/predict. Dependency-free (Node 18+).
-//
-//   BASE=http://localhost:8080 EMAIL=you@example.com PASSWORD=... node scripts/benchmark.mjs
-//
-// Run the app with RATE_LIMIT_ENABLED=false, or the predict limit (30/min per user) will
-// answer 429. Every request uploads a slightly different file (random trailing bytes) so
-// the SHA-256 result cache never short-circuits the model -- this measures real inference.
 import { readFileSync } from 'node:fs';
 import { cpus, totalmem } from 'node:os';
 import { fileURLToPath } from 'node:url';

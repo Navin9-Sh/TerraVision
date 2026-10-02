@@ -29,12 +29,6 @@ public class AdminPredictionService {
         this.userRepository = userRepository;
     }
 
-    /**
-     * userId here is an optional admin-chosen filter ("show me just this user's
-     * predictions"), not the mandatory self-scoping PredictionHistoryController uses --
-     * null means every user, matching PredictionHistoryService.search's existing
-     * null-means-all-users convention.
-     */
     public Page<AdminPredictionItem> search(Long userId, String predictedClass, Instant from, Instant to,
                                              Boolean lowConfidenceOnly, Pageable pageable) {
         Page<Prediction> page = historyService.search(userId, predictedClass, from, to, lowConfidenceOnly, pageable);

@@ -2,10 +2,3 @@ target/
 *.iml
 .idea/
 
-# model/*.pt and model/classes.json are deliberately NOT ignored: this project
-# commits the exported model directly for deployment simplicity (a real
-# production setup would pull it from object storage instead -- see
-# DEPLOYMENT.md for that trade-off). Re-ignore these two lines if that ever
-# changes:
-# model/*.pt
-# model/classes.json

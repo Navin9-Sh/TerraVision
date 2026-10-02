@@ -13,12 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
 
-/**
- * Always scoped to the authenticated caller's own predictions -- there is no
- * client-supplied userId parameter here on purpose. Seeing every user's data is
- * the admin endpoint's job (ai.terravision.admin), which is a separate, separately
- * role-guarded code path rather than an optional parameter on this one.
- */
 @RestController
 @RequestMapping("/api/v1/history")
 public class PredictionHistoryController {

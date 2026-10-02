@@ -39,7 +39,6 @@ class AuthFlowTest extends IntegrationTestBase {
         String email = "new-" + UUID.randomUUID() + "@test.local";
         postJson("/api/v1/auth/register", Map.of("email", email, "password", PASSWORD), 201);
 
-        // Correct password but unverified email: no session.
         postJson("/api/v1/auth/login", Map.of("email", email, "password", PASSWORD), 403);
 
         ArgumentCaptor<String> token = ArgumentCaptor.forClass(String.class);
@@ -74,7 +73,6 @@ class AuthFlowTest extends IntegrationTestBase {
             postJson("/api/v1/auth/login", Map.of("email", user.getEmail(), "password", "wrong-password"), 401);
         }
 
-        // Locked now: even the correct password is refused until the lock expires.
         postJson("/api/v1/auth/login", Map.of("email", user.getEmail(), "password", PASSWORD), 429);
     }
 
@@ -88,9 +86,7 @@ class AuthFlowTest extends IntegrationTestBase {
         assertThat(second).isNotEqualTo(first);
         assertThat(rotated.get("token").asText()).isNotBlank();
 
-        // Replaying the already-used token is treated as theft...
         postJson("/api/v1/auth/refresh", Map.of("refreshToken", first), 401);
-        // ...so the newer token it was rotated into is revoked as well.
         postJson("/api/v1/auth/refresh", Map.of("refreshToken", second), 401);
     }
 
@@ -117,9 +113,7 @@ class AuthFlowTest extends IntegrationTestBase {
 
         postJson("/api/v1/auth/login", Map.of("email", user.getEmail(), "password", PASSWORD), 401);
         login(user.getEmail(), "BrandNewPass456");
-        // The old session died with the reset.
         postJson("/api/v1/auth/refresh", Map.of("refreshToken", refresh), 401);
-        // And the reset link is single-use.
         postJson("/api/v1/auth/reset-password",
                 Map.of("token", token.getValue(), "newPassword", "AnotherPass789"), 400);
     }

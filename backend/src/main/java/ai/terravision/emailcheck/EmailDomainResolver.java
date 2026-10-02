@@ -15,13 +15,6 @@ import java.time.Duration;
 import java.util.Hashtable;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Asks DNS whether a domain can receive email: it needs an MX record, or (per RFC 5321's
- * implicit-MX rule) an A/AAAA record. Uses the JDK's built-in JNDI DNS provider, so no
- * extra dependency. A resolver outage is treated as "unknown" and allowed: blocking
- * every signup because DNS hiccuped would be worse than letting one bad address through,
- * and the verification email is the real proof the mailbox exists.
- */
 @Component
 public class EmailDomainResolver {
 
@@ -55,7 +48,6 @@ public class EmailDomainResolver {
         }
 
         Result result = lookup(key);
-        // Don't cache outages: the next attempt should try DNS again.
         if (result != Result.UNKNOWN) {
             if (cache.size() >= MAX_CACHE_ENTRIES) {
                 cache.clear();
@@ -79,7 +71,6 @@ public class EmailDomainResolver {
             if (mx != null && mx.size() > 0) {
                 return hasUsableMailServer(mx) ? Result.DELIVERABLE : Result.NO_MAIL_SERVER;
             }
-            // No MX: mail is delivered to the domain's own address, if it has one.
             Attributes addresses = context.getAttributes(domain, new String[]{"A", "AAAA"});
             if (addresses.get("A") != null || addresses.get("AAAA") != null) {
                 return Result.DELIVERABLE;
@@ -95,13 +86,11 @@ public class EmailDomainResolver {
                 try {
                     context.close();
                 } catch (NamingException ignored) {
-                    // nothing useful to do
                 }
             }
         }
     }
 
-    /** A single "0 ." MX record is the RFC 7505 way for a domain to say it accepts no mail. */
     private boolean hasUsableMailServer(Attribute mx) throws NamingException {
         NamingEnumeration<?> records = mx.getAll();
         while (records.hasMore()) {

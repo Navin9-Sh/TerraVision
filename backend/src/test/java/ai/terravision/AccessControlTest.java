@@ -12,7 +12,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** Who can call what: authentication (401), authorization (403), and per-user data scoping. */
 class AccessControlTest extends IntegrationTestBase {
 
     private MockMultipartFile sampleTile() throws Exception {

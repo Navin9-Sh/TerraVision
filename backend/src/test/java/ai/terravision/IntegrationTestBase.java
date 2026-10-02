@@ -24,13 +24,6 @@ import java.util.UUID;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Boots the whole application against a real PostgreSQL container (Flyway migrations
- * included), so tests exercise the same schema, security chain and JSON as production.
- * One shared context for every subclass keeps the suite fast. Skipped automatically
- * when Docker isn't available. Email sending is mocked; rate limiting is switched off
- * here and covered by its own unit test.
- */
 @EnabledIf(value = "ai.terravision.IntegrationTestBase#dockerAvailable",
         disabledReason = "Docker is not available, so the PostgreSQL test container can't start")
 @SpringBootTest(properties = {
@@ -44,9 +37,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 public abstract class IntegrationTestBase {
 
-    // One container for the whole test run, started once and never stopped by a test class
-    // (a per-class @Container would be stopped after the first class while Spring's cached
-    // context still points at it). Testcontainers' Ryuk sidecar removes it on JVM exit.
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine");
 
     static {
@@ -86,7 +76,6 @@ public abstract class IntegrationTestBase {
 
     protected static final String PASSWORD = "CorrectHorse123";
 
-    /** Inserts an already-verified account directly, bypassing the email flow. */
     protected User createUser(Role role) {
         String email = "user-" + UUID.randomUUID() + "@test.local";
         return userRepository.save(new User(email, passwordEncoder.encode(PASSWORD), role, true));

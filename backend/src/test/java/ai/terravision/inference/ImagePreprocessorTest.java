@@ -21,7 +21,6 @@ class ImagePreprocessorTest {
 
     @Test
     void wideImageIsLetterboxedWithPaddingAboveAndBelow() {
-        // 400x100 scaled to fit width -> 224x56, so the top row must be padding.
         BufferedImage wide = new BufferedImage(400, 100, BufferedImage.TYPE_INT_RGB);
         fill(wide, Color.WHITE);
 
@@ -32,7 +31,6 @@ class ImagePreprocessorTest {
 
     @Test
     void tallImageIsLetterboxedWithPaddingOnEitherSide() {
-        // 100x400 scaled to fit height -> 56x224, so the leftmost column must be padding.
         BufferedImage tall = new BufferedImage(100, 400, BufferedImage.TYPE_INT_RGB);
         fill(tall, Color.WHITE);
 

@@ -4,10 +4,6 @@ import ai.terravision.admin.dto.AdminPredictionItem;
 import ai.terravision.prediction.dto.PredictionHistoryItem;
 import org.springframework.stereotype.Component;
 
-/**
- * Shared by the per-user history endpoint and the admin all-predictions endpoint, so
- * the entity-to-DTO mapping exists in exactly one place.
- */
 @Component
 public class PredictionMapper {
 

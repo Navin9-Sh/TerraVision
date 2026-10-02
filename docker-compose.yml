@@ -30,10 +30,6 @@ services:
       DB_NAME: terravision
       DB_USERNAME: terravision
       DB_PASSWORD: terravision
-      # Real values come from a local .env file (gitignored, never committed) --
-      # see .env.example for the template. The fallbacks after ":-" are safe
-      # placeholders so this still runs out-of-the-box for anyone cloning the
-      # repo without setting up a .env, per DEPLOYMENT.md.
       TERRAVISION_JWT_SECRET: ${TERRAVISION_JWT_SECRET:-local-dev-jwt-secret-please-override-with-32-plus-random-chars}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@terravision.local}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-change-me-immediately}
@@ -45,19 +41,12 @@ services:
     ports:
       - "8080:8080"
 
-  # Local-development-only DB browser. Not part of the deployed system (see
-  # DEPLOYMENT.md) -- Render/Railway don't run this service, it's purely a
-  # convenience for inspecting the predictions table on your own machine.
   pgadmin:
     image: dpage/pgadmin4:8
     container_name: terravision-pgadmin
     depends_on:
       - postgres
     environment:
-      # pgAdmin's own email validator rejects the .local TLD as not a
-      # real-looking domain (even with deliverability checking disabled), unlike
-      # the app's own @Email validation which accepts it -- hence a different,
-      # real-TLD-shaped address here specifically for pgAdmin's login.
       PGADMIN_DEFAULT_EMAIL: admin@terravision.dev
       PGADMIN_DEFAULT_PASSWORD: admin
       PGADMIN_CONFIG_SERVER_MODE: "False"
@@ -66,8 +55,6 @@ services:
     volumes:
       - terravision-pgadmin-data:/var/lib/pgadmin
 
-  # Optional monitoring stack: `docker compose --profile monitoring up`
-  # Prometheus scrapes the app's /actuator/prometheus; Grafana loads a ready-made dashboard.
   prometheus:
     image: prom/prometheus:v2.54.1
     container_name: terravision-prometheus

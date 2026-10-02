@@ -12,12 +12,6 @@ import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Exercises the real DJL/TorchScript path end to end. Skips itself (rather than
- * failing the build) until you've run model-export/export_model.py once and
- * dropped a sample image in src/test/resources -- both are one-time local setup
- * steps, not something CI should be blocked on until the model artifact exists.
- */
 class ClassificationServiceIntegrationTest {
 
     private static final Path MODEL_DIR = Path.of("model");

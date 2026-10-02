@@ -116,7 +116,6 @@
             });
             window.location.href = `verify-pending.html?email=${encodeURIComponent(email)}`;
         } catch (err) {
-            // Validation errors arrive as "email: <message>"; show just the message.
             showError(err.message.replace(/^email:\s*/, ''));
             submitBtn.disabled = false;
             submitBtn.textContent = 'Create account';

@@ -54,7 +54,6 @@ public class User {
     private Instant createdAt;
 
     protected User() {
-        // for Hibernate
     }
 
     public User(String email, String passwordHash, Role role, boolean emailVerified) {
@@ -88,7 +87,6 @@ public class User {
         return lockedUntil;
     }
 
-    /** Counts a wrong password; once maxAttempts is reached the account locks for lockFor. */
     public void recordFailedLogin(int maxAttempts, java.time.Duration lockFor) {
         this.failedLoginAttempts++;
         if (failedLoginAttempts >= maxAttempts) {
@@ -115,7 +113,6 @@ public class User {
         return passwordResetExpiresAt == null || Instant.now().isAfter(passwordResetExpiresAt);
     }
 
-    /** Sets the new password and consumes the reset token (single use); also lifts any lockout. */
     public void completePasswordReset(String newPasswordHash) {
         this.passwordHash = newPasswordHash;
         this.passwordResetTokenHash = null;

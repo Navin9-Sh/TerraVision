@@ -7,7 +7,6 @@ public class RealEmailValidator implements ConstraintValidator<RealEmail, String
 
     private final EmailDomainResolver resolver;
 
-    // Spring's validator factory injects this (see SpringConstraintValidatorFactory).
     public RealEmailValidator(EmailDomainResolver resolver) {
         this.resolver = resolver;
     }
@@ -15,11 +14,11 @@ public class RealEmailValidator implements ConstraintValidator<RealEmail, String
     @Override
     public boolean isValid(String email, ConstraintValidatorContext context) {
         if (email == null || email.isBlank()) {
-            return true; // @NotBlank reports that one
+            return true;
         }
         String trimmed = email.trim();
         if (!EmailSyntax.isValid(trimmed)) {
-            return false; // the annotation's default message: not a name@domain.tld address
+            return false;
         }
         if (!resolver.isDnsCheckEnabled()) {
             return true;

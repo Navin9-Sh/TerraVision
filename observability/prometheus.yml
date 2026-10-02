@@ -5,5 +5,4 @@ scrape_configs:
   - job_name: terravision
     metrics_path: /actuator/prometheus
     static_configs:
-      # `app` is the Compose service name (see docker-compose.yml).
       - targets: ["app:8080"]

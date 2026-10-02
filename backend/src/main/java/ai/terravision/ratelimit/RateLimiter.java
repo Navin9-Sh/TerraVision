@@ -4,15 +4,8 @@ import java.time.Clock;
 import java.time.Duration;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Fixed-window, in-memory request counter keyed by an arbitrary string (rule + client).
- * Deliberately simple: it lives in this JVM's memory, so limits are per instance and
- * reset on restart -- fine for a single-instance deployment. Running several instances
- * would need a shared store (e.g. Redis) behind this same interface.
- */
 public class RateLimiter {
 
-    /** Outcome of one attempt: whether it was allowed, and how long to wait if not. */
     public record Result(boolean allowed, long retryAfterSeconds) {
     }
 
@@ -51,13 +44,11 @@ public class RateLimiter {
         return new Result(allowed[0], allowed[0] ? 0 : Math.max(1, (retryAfterMillis[0] + 999) / 1000));
     }
 
-    /** Drops expired windows now and then so the map can't grow without bound. */
     private synchronized void maybeSweep(long now, long windowMillis) {
         if (++callsSinceSweep < SWEEP_EVERY) {
             return;
         }
         callsSinceSweep = 0;
-        // Windows differ per rule; 1 hour is the longest rule, so anything older is dead.
         long cutoff = now - Math.max(windowMillis, Duration.ofHours(1).toMillis());
         windows.entrySet().removeIf(e -> e.getValue().startMillis < cutoff);
     }

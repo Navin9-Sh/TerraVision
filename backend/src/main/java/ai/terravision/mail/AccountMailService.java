@@ -15,13 +15,6 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Sends the account emails (verification, password reset). Uses Brevo's HTTPS API when
- * BREVO_API_KEY is set (works on hosts that block outbound SMTP), otherwise the
- * configured SMTP relay via JavaMailSender (local development). Kept as its own service,
- * not inlined into AuthService, so "what does the email say" stays separate from "what
- * makes an account valid to log into."
- */
 @Service
 public class AccountMailService {
 
@@ -76,10 +69,6 @@ public class AccountMailService {
                 sendViaSmtp(toEmail, subject, body);
             }
         } catch (Exception e) {
-            // Deliberately does not fail the calling request: for registration the account
-            // is created either way and /resend-verification lets the user retry; for a
-            // password reset, failing loudly would reveal whether an account exists. Logged
-            // at ERROR since a silently undelivered email is a real support problem.
             log.error("Failed to send '{}' email to {}", subject, toEmail, e);
         }
     }

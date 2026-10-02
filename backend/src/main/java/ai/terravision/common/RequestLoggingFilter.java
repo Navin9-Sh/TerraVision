@@ -13,13 +13,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.UUID;
 
-/**
- * Tags every request with a short correlation ID (in MDC, so it's automatically
- * included in every log line for that request per the pattern in application.yml)
- * and logs method/path/status/latency on completion. This is the minimum viable
- * "structured logging" for a project this size -- a full ELK/JSON-encoder setup
- * would add infrastructure with nothing here to consume it.
- */
 @Component
 public class RequestLoggingFilter extends OncePerRequestFilter {
 

@@ -2,11 +2,6 @@ const AUTH_STORAGE_KEY = 'terravision.auth';
 const USER_LOGIN_PAGE = 'login.html';
 const ADMIN_LOGIN_PAGE = 'login.html?intent=admin';
 
-/**
- * expiresAt is when the short-lived access token stops working; refreshExpiresAt is when
- * the whole session ends (the refresh token lapses). A session stays valid, and the access
- * token is renewed silently, until refreshExpiresAt.
- */
 function saveSession(token, email, role, expiresInSeconds, refreshToken, refreshExpiresInSeconds) {
     const now = Date.now();
     localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({
@@ -19,13 +14,11 @@ function saveSession(token, email, role, expiresInSeconds, refreshToken, refresh
     }));
 }
 
-/** Removes the JWT and the cached email/role -- everything the frontend keeps about the user. */
 function clearSession() {
     try {
         localStorage.removeItem(AUTH_STORAGE_KEY);
         sessionStorage.removeItem(AUTH_STORAGE_KEY);
     } catch (e) {
-        // storage blocked: nothing to clear
     }
 }
 
@@ -54,15 +47,10 @@ function homePageFor(role) {
     return role === 'ADMIN' ? 'admin.html' : 'classify.html';
 }
 
-/**
- * replace(), not href: the protected page must not stay in session history, or the
- * back button would land on it again after logout.
- */
 function logout() {
     const session = getSession();
     clearSession();
     if (session && session.refreshToken) {
-        // Best effort: revoke the refresh token server-side so a copied token is useless.
         fetch('/api/v1/auth/logout', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -75,19 +63,12 @@ function logout() {
 
 let refreshInFlight = null;
 
-/**
- * Trades the refresh token for a new access token (and a new refresh token -- they're
- * single-use). Shared by concurrent callers, and serialized across tabs with the Web
- * Locks API, because two tabs presenting the same refresh token would look like token
- * theft to the server. Resolves to the renewed session, or null if it can't be renewed.
- */
 function refreshSession() {
     if (refreshInFlight) return refreshInFlight;
 
     const run = async () => {
         const current = getSession();
         if (!current || !current.refreshToken) return null;
-        // Another tab may have refreshed while we waited for the lock.
         if (Date.now() < current.expiresAt - 30000) return current;
 
         try {
@@ -104,7 +85,7 @@ function refreshSession() {
             saveSession(r.token, r.email, r.role, r.expiresInSeconds, r.refreshToken, r.refreshExpiresInSeconds);
             return getSession();
         } catch (e) {
-            return null; // network trouble: keep the session, the caller can retry later
+            return null;
         }
     };
 
@@ -113,7 +94,6 @@ function refreshSession() {
     return refreshInFlight;
 }
 
-/** The access token to put on a request, renewing it first if it's about to expire. */
 async function getValidAccessToken() {
     const session = getSession();
     if (!session) return null;
@@ -122,18 +102,11 @@ async function getValidAccessToken() {
     return renewed ? renewed.token : null;
 }
 
-/** For a 401 from the API: the stored token is no longer accepted, so treat it as logged out. */
 function handleUnauthorized() {
     clearSession();
     window.location.replace(USER_LOGIN_PAGE);
 }
 
-/**
- * Call once from every protected page. Checks the session on load AND on every
- * `pageshow` (which also fires when the browser restores the page from the
- * back-forward cache, where no script would otherwise re-run), and when another tab
- * logs out. Failing the check hides the page and replace()s it with the login page.
- */
 function initProtectedPage(activePage, { admin = false } = {}) {
     const loginPage = admin ? ADMIN_LOGIN_PAGE : USER_LOGIN_PAGE;
 
@@ -163,10 +136,6 @@ function initProtectedPage(activePage, { admin = false } = {}) {
     });
 }
 
-/**
- * For login/register/landing pages: someone who's already logged in goes straight to
- * their dashboard, also when the page is restored via back/forward.
- */
 function redirectIfAlreadyLoggedIn() {
     const go = () => {
         const session = getSession();
@@ -259,8 +228,6 @@ function renderNav(activePage) {
     });
     document.getElementById('logoutBtn').addEventListener('click', logout);
 
-    // Document-level listeners are bound once even if renderNav runs again (bfcache
-    // restore); they look the elements up fresh each time.
     if (!navGlobalListenersBound) {
         navGlobalListenersBound = true;
         document.addEventListener('click', e => {

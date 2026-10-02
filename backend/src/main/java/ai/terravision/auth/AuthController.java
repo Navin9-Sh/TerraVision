@@ -48,11 +48,6 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * Hit directly from the link in the verification email, so it redirects to a
-     * static confirmation page rather than returning raw JSON to what's effectively
-     * a browser navigation, not an API call.
-     */
     @GetMapping("/verify")
     public ResponseEntity<Void> verify(@RequestParam String token) {
         boolean verified = authService.verify(token);

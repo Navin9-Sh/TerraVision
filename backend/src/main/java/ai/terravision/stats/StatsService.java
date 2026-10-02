@@ -16,10 +16,6 @@ public class StatsService {
         this.repository = repository;
     }
 
-    /**
-     * userId null = across all users (the admin view); a real id scopes to just that
-     * user's own predictions (the regular, per-user /stats endpoint).
-     */
     public StatsResponse computeStats(Long userId) {
         long total = repository.countTotal(userId);
         if (total == 0) {

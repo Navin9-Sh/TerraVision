@@ -7,11 +7,6 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.util.Map;
 
-/**
- * Human-readable descriptions and emoji shown alongside each predicted class,
- * loaded from the bundled class-metadata.json (kept separate from classes.json,
- * which is the source of truth for model output ordering).
- */
 @Service
 public class ClassMetadataService {
 

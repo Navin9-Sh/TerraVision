@@ -63,10 +63,6 @@
     document.getElementById('mailIcon').innerHTML = ICONS.mail;
     document.getElementById('lockIcon').innerHTML = ICONS.lock;
 
-    // Cosmetic-only framing from the landing page's two buttons: same form, same
-    // endpoint, same request either way. Actual role always comes from the server's
-    // JWT after login, never from which button got you here -- see index.html and
-    // ARCHITECTURE.md for why this is safe to do purely as UI framing.
     const params = new URLSearchParams(window.location.search);
     const isAdminIntent = params.get('intent') === 'admin';
     if (isAdminIntent) {
@@ -108,11 +104,6 @@
         const password = passwordInput.value;
 
         try {
-            // Identical call regardless of intent=admin/user -- the server is the
-            // only source of truth for role. But which button got them here is a
-            // promise about who's allowed through: the admin entry point must
-            // reject a non-admin account (and vice versa) as if the credentials
-            // were simply wrong, rather than logging them into the wrong side.
             const result = await apiFetch('/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -127,7 +118,6 @@
 
             saveSession(result.token, result.email, result.role, result.expiresInSeconds,
                 result.refreshToken, result.refreshExpiresInSeconds);
-            // replace(), so Back from the dashboard doesn't return to this login form.
             window.location.replace(homePageFor(result.role));
         } catch (err) {
             let extra = '';

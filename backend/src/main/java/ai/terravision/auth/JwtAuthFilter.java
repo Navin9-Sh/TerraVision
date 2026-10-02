@@ -16,12 +16,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * Replaces Stage 3's shared API key for /api/v1/** now that real per-user identity
- * exists. A missing or invalid/expired token simply leaves the request unauthenticated
- * -- SecurityConfig's authorization rules then reject it with 401, same failure mode
- * as before.
- */
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 

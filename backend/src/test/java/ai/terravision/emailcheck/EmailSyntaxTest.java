@@ -23,23 +23,23 @@ class EmailSyntaxTest {
 
     @ParameterizedTest
     @ValueSource(strings = {
-            "navin@gmail",          // no TLD
-            "hi@how",               // no TLD
-            "navin@",               // empty domain
-            "@gmail.com",           // empty local part
-            "navin@@gmail.com",     // two @
-            "na vin@gmail.com",     // space
-            "navin@gmail..com",     // empty label
-            "navin@.gmail.com",     // leading dot
-            "navin@gmail.com.",     // trailing dot
-            ".navin@gmail.com",     // leading dot in local part
-            "na..vin@gmail.com",    // double dot in local part
-            "navin@gmail.c",        // one-letter TLD
-            "navin@gmail.123",      // numeric TLD
-            "navin@-gmail.com",     // label starts with hyphen
-            "navin@gmail-.com",     // label ends with hyphen
-            "navin@127.0.0.1",      // IP, numeric TLD
-            "navin"                 // no @ at all
+            "navin@gmail",
+            "hi@how",
+            "navin@",
+            "@gmail.com",
+            "navin@@gmail.com",
+            "na vin@gmail.com",
+            "navin@gmail..com",
+            "navin@.gmail.com",
+            "navin@gmail.com.",
+            ".navin@gmail.com",
+            "na..vin@gmail.com",
+            "navin@gmail.c",
+            "navin@gmail.123",
+            "navin@-gmail.com",
+            "navin@gmail-.com",
+            "navin@127.0.0.1",
+            "navin"
     })
     void rejectsMalformedAddresses(String email) {
         assertThat(EmailSyntax.isValid(email)).isFalse();

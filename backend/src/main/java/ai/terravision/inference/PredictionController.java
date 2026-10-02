@@ -22,13 +22,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
-/**
- * This controller orchestrates two services that deliberately know nothing about each
- * other: ClassificationService (pure ML inference) and PredictionHistoryService
- * (persistence). Neither depends on the other -- the controller is what wires them
- * together per request, which is exactly the kind of coordination a controller should
- * own rather than either service.
- */
 @RestController
 @RequestMapping("/api/v1")
 @Tag(name = "Prediction", description = "Run land-use classification on an uploaded image")

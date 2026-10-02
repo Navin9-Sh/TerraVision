@@ -5,22 +5,8 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 
-/**
- * Letterbox resize: scales the source image to fit within targetSize x targetSize
- * while preserving its aspect ratio, then pads the leftover space with a fill color.
- *
- * <p>The original Flask prototype used a hard center-crop to square before resizing,
- * which discards whatever falls outside that square. This preserves the full frame
- * instead, at the cost of some padding pixels -- generally the better trade-off for
- * satellite tiles where content near the edges still matters.
- */
 public final class ImagePreprocessor {
 
-    /**
-     * ImageNet mean (0.485, 0.456, 0.406) scaled to 0-255, used as the pad color so the
-     * letterbox borders sit close to the average pixel the network saw during training,
-     * rather than introducing a stark edge (e.g. pure black) it never learned to ignore.
-     */
     public static final Color IMAGENET_MEAN_PAD = new Color(124, 116, 104);
 
     private ImagePreprocessor() {

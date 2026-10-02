@@ -26,11 +26,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-/**
- * Loads the TorchScript model exported by model-export/export_model.py once at
- * startup, then serves predictions through DJL's PyTorch engine. Nothing here
- * ever shells out to Python -- the .pt file is a self-contained graph.
- */
 @Service
 public class ClassificationService {
 
@@ -49,7 +44,6 @@ public class ClassificationService {
         this.properties = properties;
         this.metadataService = metadataService;
         this.objectMapper = objectMapper;
-        // Time spent in the model itself (cache hits never reach it), exposed to Prometheus.
         this.inferenceTimer = Timer.builder("terravision.inference")
                 .description("Model inference time")
                 .publishPercentileHistogram()
@@ -102,14 +96,6 @@ public class ClassificationService {
                 inferenceTimeMs);
     }
 
-    /**
-     * Same inference, keyed by the uploaded bytes' SHA-256 hash: classification is a
-     * pure function of the image, so a repeat upload of identical bytes (common during
-     * manual testing/demos) returns the cached result instantly instead of re-running
-     * the model. Backed by Spring's default in-memory ConcurrentMapCacheManager, which
-     * is unbounded -- fine for this project's expected traffic, but a real production
-     * deployment would want a bounded/TTL'd cache (e.g. Caffeine) instead.
-     */
     @Cacheable(cacheNames = "predictionsByHash", key = "#imageHash")
     public PredictionResult predictCached(String imageHash, byte[] imageBytes) throws IOException {
         return predict(new ByteArrayInputStream(imageBytes));

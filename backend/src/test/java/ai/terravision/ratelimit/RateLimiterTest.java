@@ -15,7 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RateLimiterTest {
 
-    /** A clock the test can move forward by hand. */
     private static final class MutableClock extends Clock {
         private Instant now = Instant.parse("2026-01-01T00:00:00Z");
 
@@ -95,7 +94,6 @@ class RateLimiterTest {
         assertThat(limited.getHeader("Retry-After")).isNotBlank();
         assertThat(limited.getContentAsString()).contains("Too many requests");
 
-        // A different client, and a path with no rule, are unaffected.
         MockHttpServletRequest otherClient = new MockHttpServletRequest("POST", "/api/v1/auth/login");
         otherClient.setRemoteAddr("203.0.113.10");
         MockHttpServletResponse ok = new MockHttpServletResponse();

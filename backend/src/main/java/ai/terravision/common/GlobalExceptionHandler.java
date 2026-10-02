@@ -16,11 +16,6 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.stream.Collectors;
 
-/**
- * Every error path in the API returns the same ErrorResponse shape, so API consumers
- * (including the Stage 4 frontend) can handle failures with one code path instead of
- * special-casing each endpoint's error format.
- */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -49,12 +44,6 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.FORBIDDEN, "Access denied", request);
     }
 
-    /**
-     * Spring 6.1+ throws this for a request that matches neither a controller nor a
-     * static resource (replacing the older silent-404 behavior), so it's a real
-     * exception a catch-all handler would otherwise swallow into a wrong 500 --
-     * handled explicitly here to preserve the 404 it actually represents.
-     */
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<ErrorResponse> handleNoResourceFound(NoResourceFoundException ex, HttpServletRequest request) {
         return build(HttpStatus.NOT_FOUND, "Not found", request);
@@ -67,8 +56,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(Exception ex, HttpServletRequest request) {
-        // A genuinely unanticipated exception reaching here with no logging would be
-        // silently undebuggable in production -- this was previously missing.
         log.error("Unhandled exception on {} {}", request.getMethod(), request.getRequestURI(), ex);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error", request);
     }

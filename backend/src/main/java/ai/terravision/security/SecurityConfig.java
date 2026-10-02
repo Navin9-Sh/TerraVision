@@ -29,25 +29,14 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter,
                                                     ObjectMapper objectMapper, RateLimitProperties rateLimitProperties)
             throws Exception {
-        // Built here rather than as a @Component so it only runs inside this chain, after
-        // the JWT filter has identified the caller.
         RateLimitFilter rateLimitFilter = new RateLimitFilter(objectMapper, rateLimitProperties.enabled());
 
         http
-                // Stateless JSON API with no browser session/cookie to protect -- CSRF
-                // protection exists specifically for cookie-authenticated browser state.
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                // Spring's default X-Frame-Options: DENY blocks even same-origin iframes;
-                // the Pune map page embeds its own static map file in one.
                 .headers(h -> h.frameOptions(f -> f.sameOrigin()))
-                // Missing/invalid/expired token -> 401 (the frontend treats that as "logged out").
-                // Spring's default would be 403, which is reserved for a logged-in user who
-                // lacks permission (e.g. a non-admin calling /api/v1/admin/**).
                 .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .authorizeHttpRequests(auth -> auth
-                        // Static frontend and its own calls to /api/v1/health for an
-                        // unauthenticated "is the backend up" check.
                         .requestMatchers("/", "/*.html", "/css/**", "/js/**", "/images/**").permitAll()
                         .requestMatchers("/api/v1/health").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()

@@ -22,9 +22,6 @@ jobs:
           java-version: "21"
           cache: maven
 
-      # Runs the unit tests and the integration tests. The integration tests start a real
-      # PostgreSQL container (Testcontainers; Docker is preinstalled on the runner) and load
-      # the real model from backend/model.
       - name: mvn verify
         working-directory: backend
         run: mvn -B verify

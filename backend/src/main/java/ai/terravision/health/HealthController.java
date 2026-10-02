@@ -8,11 +8,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
 
-/**
- * Public, unauthenticated (see SecurityConfig) app-level health check, distinct from
- * Spring Boot Actuator's /actuator/health: this one reports whether the ML model
- * actually loaded, which Actuator's generic liveness check knows nothing about.
- */
 @RestController
 @RequestMapping("/api/v1")
 public class HealthController {

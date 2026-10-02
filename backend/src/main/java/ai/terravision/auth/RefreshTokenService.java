@@ -9,11 +9,6 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Base64;
 
-/**
- * Opaque, single-use refresh tokens with rotation. Presenting an already-used (revoked)
- * token is treated as theft -- every session of that user is revoked -- since a
- * legitimate client only ever holds the newest token.
- */
 @Service
 public class RefreshTokenService {
 
@@ -27,7 +22,6 @@ public class RefreshTokenService {
         this.jwtService = jwtService;
     }
 
-    /** Creates and stores a new refresh token; returns the raw value (shown to the client once). */
     @Transactional
     public String issue(Long userId) {
         byte[] bytes = new byte[32];
@@ -38,7 +32,6 @@ public class RefreshTokenService {
         return raw;
     }
 
-    /** Validates and consumes a refresh token, returning the owning user's id. */
     @Transactional(noRollbackFor = UnauthorizedException.class)
     public Long consume(String rawToken) {
         RefreshToken token = repository.findByTokenHash(Sha256.hash(rawToken))

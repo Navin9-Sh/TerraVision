@@ -71,12 +71,8 @@ def main() -> None:
     print("Tracing model to TorchScript ...")
     dummy_input = torch.zeros(1, 3, 224, 224, dtype=torch.float32)
     traced = torch.jit.trace(model, dummy_input)
-    traced = torch.jit.freeze(traced)  # fold eval-mode batchnorm/dropout constants for faster inference
+    traced = torch.jit.freeze(traced)
 
-    # Sanity check: the traced graph must reproduce the eager model's output.
-    # If this assertion ever fails, do NOT ship the artifact -- it means tracing
-    # silently diverged (e.g. missed a conditional branch), and DJL would be
-    # serving incorrect predictions without any error.
     with torch.no_grad():
         eager_out = model(dummy_input)
         traced_out = traced(dummy_input)

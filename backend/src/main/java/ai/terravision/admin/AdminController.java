@@ -13,11 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
 
-/**
- * Restricted to role=ADMIN at the security-filter level (SecurityConfig's
- * hasRole("ADMIN") on /api/v1/admin/**), not just by the frontend hiding a nav link --
- * a non-admin JWT gets a 403 here regardless of what the UI shows.
- */
 @RestController
 @RequestMapping("/api/v1/admin")
 @Tag(name = "Admin", description = "Admin-only visibility into all users and predictions")

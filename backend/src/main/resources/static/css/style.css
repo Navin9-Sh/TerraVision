@@ -49,7 +49,6 @@ code {
     font-size: 0.9em;
 }
 
-/* Topbar */
 #topbar {
     position: sticky;
     top: 0;
@@ -58,8 +57,6 @@ code {
     border-bottom: 1px solid var(--color-border);
 }
 
-/* Full width on purpose: brand hugs the left edge, user menu the right edge,
-   independent of the 1100px content column below. */
 .topbar-inner {
     padding: 10px 24px;
     display: flex;
@@ -135,7 +132,6 @@ code {
     height: 18px;
 }
 
-/* User menu */
 .user-menu {
     position: relative;
     margin-left: auto;
@@ -351,7 +347,6 @@ code {
     }
 }
 
-/* Page shell */
 .page {
     max-width: 1100px;
     margin: 0 auto;
@@ -374,7 +369,6 @@ code {
     margin-top: 4px;
 }
 
-/* Auth pages */
 .auth-shell {
     min-height: 100vh;
     display: flex;
@@ -453,8 +447,6 @@ code {
     height: 55%;
 }
 
-/* Pages inject the icon into an inner span; size and center that span itself, or
-   the SVG sits at the span's auto width and drifts off-center. */
 .icon-badge > span {
     display: inline-flex;
     align-items: center;
@@ -468,7 +460,6 @@ code {
     height: 100%;
 }
 
-/* Forms */
 .form-field {
     margin-bottom: 16px;
     display: flex;
@@ -513,10 +504,6 @@ code {
     gap: 8px;
 }
 
-/* Inputs with an icon inside them (auth forms: leading icon, optional trailing
-   toggle button). Icons are positioned against the input's own box, so they stay
-   centered regardless of font-size/line-height changes rather than being centered
-   by eye with a fixed top offset. */
 .input-icon-wrapper {
     position: relative;
 }
@@ -644,7 +631,6 @@ code {
     padding: 0;
 }
 
-/* Alerts */
 .alert {
     display: flex;
     align-items: flex-start;
@@ -678,7 +664,6 @@ code {
     color: var(--color-warning);
 }
 
-/* Cards */
 .card {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
@@ -687,7 +672,6 @@ code {
     padding: 24px;
 }
 
-/* Upload / Classify */
 .upload-box {
     border: 1.5px dashed var(--color-border);
     border-radius: var(--radius);
@@ -802,7 +786,6 @@ code {
     font-family: var(--font-mono);
 }
 
-/* Class chips */
 .class-grid {
     display: flex;
     flex-wrap: wrap;
@@ -819,7 +802,6 @@ code {
     font-size: 0.8rem;
 }
 
-/* Stat cards */
 .stats-row {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -854,7 +836,6 @@ code {
     margin-top: 2px;
 }
 
-/* Filters */
 .filters-bar {
     display: flex;
     flex-wrap: wrap;
@@ -886,7 +867,6 @@ code {
     gap: 6px;
 }
 
-/* Tables */
 .table-card {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
@@ -949,7 +929,6 @@ table.data-table {
     color: var(--color-accent);
 }
 
-/* Pagination */
 .pagination {
     display: flex;
     justify-content: center;
@@ -983,7 +962,6 @@ table.data-table {
     cursor: not-allowed;
 }
 
-/* Empty / loading states */
 .empty-state {
     text-align: center;
     padding: 48px 20px;
@@ -1015,7 +993,6 @@ table.data-table {
     font-size: 0.88rem;
 }
 
-/* Model info / about */
 .content-card {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
@@ -1089,7 +1066,6 @@ table.data-table {
     color: var(--color-ink-faint);
 }
 
-/* Charts */
 .dashboard-charts {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1109,7 +1085,6 @@ table.data-table {
     margin-bottom: 14px;
 }
 
-/* Footer */
 footer {
     text-align: center;
     padding: 24px;
@@ -1117,7 +1092,6 @@ footer {
     font-size: 0.78rem;
 }
 
-/* Pune map page */
 .map-stats {
     display: flex;
     flex-wrap: wrap;
@@ -1168,7 +1142,6 @@ footer {
     flex-shrink: 0;
 }
 
-/* Role switch on the login pages */
 .role-switch {
     margin-top: 16px;
     padding-top: 16px;
@@ -1197,7 +1170,6 @@ footer {
     height: 16px;
 }
 
-/* Result card: single top prediction */
 .result-top {
     justify-content: space-between;
     align-items: flex-start;
@@ -1273,7 +1245,6 @@ footer {
     border: 1px solid var(--color-border);
 }
 
-/* Brand on the standalone auth pages: a bit larger than in the navbar */
 .auth-shell .brand {
     gap: 12px;
 }

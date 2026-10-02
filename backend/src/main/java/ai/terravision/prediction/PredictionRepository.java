@@ -7,12 +7,6 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-/**
- * Every aggregate query takes a nullable userId: null means "all users" (the admin
- * view), a real id scopes to just that user's predictions (the regular /stats
- * endpoint). One query per metric handles both cases rather than duplicating each
- * query for a scoped and unscoped variant.
- */
 public interface PredictionRepository extends JpaRepository<Prediction, Long>, JpaSpecificationExecutor<Prediction> {
 
     @Query("select count(p) from Prediction p where (:userId is null or p.userId = :userId)")

@@ -9,7 +9,6 @@ import jakarta.persistence.Table;
 
 import java.time.Instant;
 
-/** Server-side record of an issued refresh token. Only the SHA-256 of the token is stored. */
 @Entity
 @Table(name = "refresh_tokens")
 public class RefreshToken {
@@ -34,7 +33,6 @@ public class RefreshToken {
     private boolean revoked;
 
     protected RefreshToken() {
-        // for Hibernate
     }
 
     public RefreshToken(Long userId, String tokenHash, Instant expiresAt) {

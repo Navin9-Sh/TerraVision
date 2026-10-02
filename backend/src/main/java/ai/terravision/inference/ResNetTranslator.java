@@ -13,11 +13,6 @@ import ai.djl.translate.TranslatorContext;
 import java.awt.image.BufferedImage;
 import java.util.List;
 
-/**
- * Mirrors the training-time transform (resize -> tensor -> ImageNet normalize), except
- * the resize step is an aspect-preserving letterbox (see {@link ImagePreprocessor}) rather
- * than the original hard center-crop.
- */
 public class ResNetTranslator implements Translator<Image, Classifications> {
 
     private static final int INPUT_SIZE = 224;
@@ -36,8 +31,8 @@ public class ResNetTranslator implements Translator<Image, Classifications> {
         BufferedImage letterboxed = ImagePreprocessor.resizeWithPadding(buffered, INPUT_SIZE);
         Image djlImage = ImageFactory.getInstance().fromImage(letterboxed);
 
-        NDArray array = djlImage.toNDArray(ctx.getNDManager(), Image.Flag.COLOR); // HWC, uint8
-        array = NDImageUtils.toTensor(array); // -> CHW, float32 in [0, 1]
+        NDArray array = djlImage.toNDArray(ctx.getNDManager(), Image.Flag.COLOR);
+        array = NDImageUtils.toTensor(array);
         array = normalize(array);
         return new NDList(array);
     }

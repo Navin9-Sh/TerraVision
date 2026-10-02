@@ -34,12 +34,6 @@
 <script src="js/icons.js"></script>
 <script src="js/auth.js"></script>
 <script>
-    // Both buttons above go to the exact same login form and the exact same
-    // POST /api/v1/auth/login call -- "Admin Login" only changes the login page's
-    // heading/icon (cosmetic, via ?intent=admin). Role is determined solely by the
-    // server from the JWT it issues; logging in with a non-admin account via
-    // "Admin Login" just logs you in as a regular user, same as clicking
-    // "User Login" would have.
     redirectIfAlreadyLoggedIn();
     document.getElementById('userLoginIcon').innerHTML = ICONS.user;
     document.getElementById('adminLoginIcon').innerHTML = ICONS.shield;

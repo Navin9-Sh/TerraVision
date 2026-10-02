@@ -20,7 +20,6 @@
     <properties>
         <java.version>21</java.version>
         <djl.version>0.29.0</djl.version>
-        <!-- Newer than Spring Boot 3.3's default: the older docker-java client is rejected by recent Docker Engines. -->
         <testcontainers.version>1.21.3</testcontainers.version>
     </properties>
 
@@ -67,8 +66,6 @@
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
 
-        <!-- JWT issuing/parsing for Stage 8 authentication. jjwt-impl/jackson are
-             runtime-only: application code only ever touches the jjwt-api types. -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -105,7 +102,6 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Flyway 10+ split database-specific support into separate artifacts. -->
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
@@ -115,36 +111,19 @@
             <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
 
-        <!-- Deep Java Library: model loading + inference API -->
         <dependency>
             <groupId>ai.djl</groupId>
             <artifactId>api</artifactId>
         </dependency>
 
-        <!-- DJL's PyTorch engine: executes TorchScript (.pt) graphs via libtorch/JNI -->
         <dependency>
             <groupId>ai.djl.pytorch</groupId>
             <artifactId>pytorch-engine</artifactId>
         </dependency>
 
-        <!--
-          Native libtorch binary DJL's PyTorch engine calls into via JNI. pytorch-native-auto
-          (which used to auto-detect OS/arch at runtime) was deprecated in DJL 0.15 and last
-          published in 2020, so it's not usable with DJL 0.29. pytorch-native-cpu requires an
-          explicit classifier instead; ${djl.native.classifier} is set per-OS by the profiles
-          below so the same pom.xml resolves win-x86_64 here and linux-x86_64 inside the
-          Linux-based Stage 5 Docker build, with no manual switching.
-        -->
         <dependency>
             <groupId>ai.djl.pytorch</groupId>
             <artifactId>pytorch-native-cpu</artifactId>
-            <!--
-              Versioned independently of the djl.version property above: this is the
-              libtorch (PyTorch native library) version, not the DJL API version, and
-              isn't covered by the DJL BOM. Must match the torch version pinned in
-              model-export/requirements.txt so the exported TorchScript graph's ops
-              are guaranteed to exist in this native runtime.
-            -->
             <version>2.3.1</version>
             <classifier>${djl.native.classifier}</classifier>
             <scope>runtime</scope>
@@ -162,7 +141,6 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Real PostgreSQL in a throwaway container for integration tests (needs Docker). -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-testcontainers</artifactId>
@@ -190,11 +168,8 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <!-- Lets Mockito's Byte Buddy run on JDKs newer than it officially knows (local JDK 25/26). -->
                     <argLine>-Dnet.bytebuddy.experimental=true</argLine>
                     <systemPropertyVariables>
-                        <!-- Testcontainers' bundled docker-java asks for an API version that Docker Engine 29+
-                             rejects (min 1.44); pinning it keeps the integration tests runnable on current Docker. -->
                         <api.version>1.44</api.version>
                     </systemPropertyVariables>
                 </configuration>
@@ -202,11 +177,6 @@
         </plugins>
     </build>
 
-    <!--
-      Selects the DJL native-library classifier by build OS, so `mvn package` resolves
-      the right pytorch-native-cpu binary whether it's run on a Windows dev machine or
-      inside the Linux container built in Stage 5's Dockerfile no -P flag needed.
-    -->
     <profiles>
         <profile>
             <id>native-windows</id>
@@ -219,11 +189,6 @@
         </profile>
         <profile>
             <id>native-linux</id>
-            <!--
-              Matched by OS name rather than family="unix": macOS also satisfies the
-              "unix" family in Maven's OS detection, which would activate this profile
-              and native-mac simultaneously and leave the classifier ambiguous.
-            -->
             <activation>
                 <os><name>Linux</name></os>
             </activation>

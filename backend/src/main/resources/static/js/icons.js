@@ -1,8 +1,3 @@
-/**
- * Small hand-built line-icon set (24x24, stroke-based, currentColor) used in place
- * of emoji throughout the redesigned frontend. Not a reproduction of a named icon
- * library -- built specifically for this project's icon needs.
- */
 const ICONS = {
     mail: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3,7 12,13 21,7"/></svg>`,
 
@@ -42,15 +37,7 @@ const ICONS = {
 
     refresh: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.5-4M4 5v4h4"/><path d="M4 13a8 8 0 0 0 14.5 4M20 19v-4h-4"/></svg>`,
 
-    /**
-     * Brand mark: an earth disc with land patches, circled by a satellite orbit.
-     * Inherits the accent color from its wrapper (.brand-logo sets `color`), so it
-     * follows the theme instead of hard-coding a hex value. favicon.svg is the same
-     * drawing with the accent color baked in.
-     */
     logo: `<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="currentColor"/><circle cx="16" cy="16" r="8.5" style="fill:var(--color-bg)"/><path d="M10.5 13.2c1.6-2.4 4.2-2.6 5.4-1.4 1 1-.2 2.4-1.4 2.8-1.6.5-1.2 2.2-2.6 2.2-1.2 0-2.6-1.8-1.4-3.6z" fill="currentColor" opacity=".9"/><path d="M17.4 18.6c1.6-.8 3.6-.4 4.2.9.5 1.2-.7 2.8-2.4 3-1.7.1-3.2-2.8-1.8-3.9z" fill="currentColor" opacity=".9"/><g transform="rotate(-25 16 16)"><ellipse cx="16" cy="16" rx="13" ry="4.6" fill="none" style="stroke:var(--color-bg)" stroke-width="1.4"/><rect x="26.4" y="14.3" width="3.4" height="3.4" rx=".7" style="fill:var(--color-bg)"/></g></svg>`,
 };
 
-// Fills the logo into any <span class="brand-logo" data-brand-logo> placeholder (the
-// login/register/landing pages have no nav script, but share this file and its drawing).
 document.querySelectorAll('[data-brand-logo]').forEach(el => { el.innerHTML = ICONS.logo; });

@@ -4,12 +4,6 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.time.Instant;
 
-/**
- * Each method returns a Specification whose predicate is null when its filter
- * argument is absent. Specification.allOf(...) (used by PredictionHistoryService)
- * treats a null predicate as "always true", so absent filters simply drop out of
- * the WHERE clause instead of needing to be branched around by hand.
- */
 public final class PredictionSpecifications {
 
     private PredictionSpecifications() {

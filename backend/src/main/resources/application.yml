@@ -1,23 +1,14 @@
 server:
-  # Behind a proxy (Railway, Hugging Face, ...) the real client IP arrives in
-  # X-Forwarded-For; needed for per-IP rate limiting to see clients, not the proxy.
   forward-headers-strategy: native
-  # Container platforms (Render, Railway, ...) inject the port to listen on as PORT.
   port: ${PORT:8080}
 
 logging:
   pattern:
-    # [requestId] before the logger name on every line, populated by
-    # RequestLoggingFilter via MDC so a single request's log lines can be
-    # grepped out of a shared production log stream.
     console: "%d{HH:mm:ss.SSS} %-5level [%X{requestId:-n/a}] %logger{36} - %msg%n"
 
 spring:
   application:
     name: terravision-backend
-  # No SPRING_PROFILES_ACTIVE set -> local `mvn spring-boot:run` gets the dev
-  # profile below (localhost Postgres). docker-compose.yml sets it to "prod"
-  # for the containerized app service (Postgres reached by service name).
   profiles:
     active: dev
   servlet:
@@ -27,8 +18,6 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      # Flyway owns the schema; Hibernate only checks its entity mappings match
-      # what Flyway created, it never generates or alters tables itself.
       ddl-auto: validate
   flyway:
     enabled: true
@@ -47,7 +36,6 @@ spring:
 management:
   metrics:
     distribution:
-      # Histogram buckets so Prometheus/Grafana can compute p95/p99 request latency.
       percentiles-histogram:
         http.server.requests: true
   endpoints:
@@ -58,13 +46,6 @@ management:
     health:
       show-details: when-authorized
   health:
-    # Without this, Spring Boot's auto-registered MailHealthIndicator tests SMTP
-    # connectivity as part of the aggregate health check -- a slow/unreachable mail
-    # relay (or, locally, no SMTP credentials configured yet) would then drag the
-    # *entire* app's health to DOWN, even though the database and model are fine.
-    # Email delivery failures are already handled gracefully (logged, non-fatal) in
-    # VerificationMailService, so they shouldn't also cause an orchestrator like
-    # Render/Railway to think the whole app needs restarting.
     mail:
       enabled: false
   prometheus:
@@ -78,41 +59,23 @@ springdoc:
 
 terravision:
   jwt:
-    # Must be a random string of 32+ characters -- JwtService fails fast at startup
-    # otherwise. Generate one with `openssl rand -base64 32`.
     secret: ${TERRAVISION_JWT_SECRET:}
-    # Short-lived access token; the frontend silently renews it with the refresh token.
     expiration-minutes: 15
     refresh-expiration-days: 7
   email-validation:
-    # Reject signup emails whose domain can't receive mail (no MX/A record in DNS).
     dns-check: ${EMAIL_DNS_CHECK:true}
   rate-limit:
-    # Per-client request caps on the auth endpoints and /predict (see RateLimitFilter).
     enabled: ${RATE_LIMIT_ENABLED:true}
   mail:
     from-address: ${MAIL_FROM_ADDRESS:}
-    # If set, verification emails go out through Brevo's HTTPS API (port 443) instead of
-    # SMTP. Needed on hosts that block outbound SMTP ports (Render free, Railway Hobby).
-    # Leave empty to use the SMTP relay configured under spring.mail.
     brevo-api-key: ${BREVO_API_KEY:}
-    # Used to build the verification link sent in the email
-    # (<app-base-url>/api/v1/auth/verify?token=...) and its redirect target.
-    # Override to the real public URL once deployed (see DEPLOYMENT.md).
     app-base-url: ${APP_BASE_URL:http://localhost:8080}
   admin:
-    # Seeds exactly one ADMIN account on first startup (AdminSeeder). Only required
-    # the very first time the app runs against an empty users table.
     email: ${ADMIN_EMAIL:}
     password: ${ADMIN_PASSWORD:}
   inference:
-    # Directory containing <model-name>.pt and classes.json, produced by
-    # model-export/export_model.py. Relative paths resolve against the JVM's
-    # working directory (the backend/ folder locally, or /app inside the container).
     model-dir: ./model
     model-name: terravision-resnet50
-    # Top-1 probability below this is flagged as low-confidence / possibly
-    # out-of-distribution, rather than presented as a confident answer.
     confidence-threshold: 0.60
     low-confidence-message: >
       This model was trained exclusively on Sentinel-2 satellite tiles from the EuroSAT dataset.
@@ -121,8 +84,6 @@ terravision:
       as unreliable.
 
 ---
-# Local development: run via `mvn spring-boot:run` against Postgres started with
-# `docker compose up postgres` (or a local install), reachable at localhost.
 spring:
   config:
     activate:
@@ -133,10 +94,6 @@ spring:
     password: terravision
 
 ---
-# Containerized: the app itself runs inside docker-compose's network, where the
-# Postgres service is reachable by its service name ("postgres"), not localhost.
-# Every value is env-var overridable so the same image works unmodified on
-# Render/Railway once DB_HOST etc. point at their managed Postgres instance.
 spring:
   config:
     activate:

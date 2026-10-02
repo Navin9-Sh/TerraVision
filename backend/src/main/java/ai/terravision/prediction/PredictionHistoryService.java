@@ -8,11 +8,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 
-/**
- * Bridges Stage 1's pure-ML ClassificationService to persistence: ClassificationService
- * has no idea rows get saved, and this service has no idea how inference works. The
- * controller is what wires the two together per request.
- */
 @Service
 public class PredictionHistoryService {
 
@@ -39,12 +34,6 @@ public class PredictionHistoryService {
         }
     }
 
-    /**
-     * userId is mandatory scoping for a regular user's own history (always their own
-     * id) and an optional filter for the admin "all predictions" view (null = every
-     * user). Both call sites go through this one method rather than having two
-     * near-duplicate query paths.
-     */
     public Page<Prediction> search(Long userId, String predictedClass, Instant from, Instant to,
                                     Boolean lowConfidenceOnly, Pageable pageable) {
         Specification<Prediction> spec = Specification.allOf(

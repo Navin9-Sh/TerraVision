@@ -70,7 +70,6 @@ classifyBtn.addEventListener('click', async () => {
 
 uploadAnotherBtn.addEventListener('click', resetUpload);
 
-/** Back to the empty upload state, without reloading the page. */
 function resetUpload() {
     imageInput.value = '';
     previewImage.removeAttribute('src');

@@ -9,10 +9,6 @@ import jakarta.persistence.Table;
 
 import java.time.Instant;
 
-/**
- * One row per /predict call. Not a record: JPA entities need a mutable, non-final
- * class with a no-arg constructor so Hibernate can proxy and lazily populate them.
- */
 @Entity
 @Table(name = "predictions")
 public class Prediction {
@@ -45,15 +41,10 @@ public class Prediction {
     @Column(nullable = false)
     private boolean lowConfidence;
 
-    // Nullable: rows created before user accounts existed have no owner. Not a
-    // @ManyToOne relation on purpose -- callers only ever need the id, and avoiding
-    // the association sidesteps lazy-loading/proxy concerns for a value nothing here
-    // navigates through.
     @Column(name = "user_id")
     private Long userId;
 
     protected Prediction() {
-        // for Hibernate
     }
 
     public Prediction(String imageHash, String filename, String predictedClass, double confidence,

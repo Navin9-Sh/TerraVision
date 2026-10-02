@@ -21,17 +21,10 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
-/**
- * Caps how often a client can hit the endpoints that are expensive (model inference) or
- * worth brute-forcing (login, registration, password reset). Clients are identified by
- * IP, or by user id on authenticated routes. Runs after the JWT filter so it can see
- * who the caller is. Disabled with terravision.rate-limit.enabled=false (used by tests).
- */
 public class RateLimitFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(RateLimitFilter.class);
 
-    /** One limit: requests matching (method, path) are capped at max per window. */
     record Rule(String name, String method, String path, int max, Duration window, boolean perUser) {
     }
 

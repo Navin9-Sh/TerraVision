@@ -2,17 +2,11 @@ package ai.terravision.emailcheck;
 
 import java.util.regex.Pattern;
 
-/**
- * Stricter than Jakarta's @Email, which accepts "name@gmail" and "hi@how" (a bare
- * hostname is a legal address by the RFC). A signup email must be name@domain.tld.
- */
 public final class EmailSyntax {
 
-    // Letters, digits and the usual punctuation; no leading/trailing/double dots.
     private static final Pattern LOCAL_PART =
             Pattern.compile("^[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(\\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*$");
     private static final Pattern LABEL = Pattern.compile("^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$");
-    // A real TLD: letters only (2+), or punycode for internationalised ones (xn--...).
     private static final Pattern TLD = Pattern.compile("^([A-Za-z]{2,63}|xn--[A-Za-z0-9-]{1,59})$");
 
     private EmailSyntax() {
@@ -41,7 +35,7 @@ public final class EmailSyntax {
     private static boolean isValidDomain(String domain) {
         String[] labels = domain.split("\\.", -1);
         if (labels.length < 2) {
-            return false; // "gmail", "how": no TLD
+            return false;
         }
         for (String label : labels) {
             if (!LABEL.matcher(label).matches()) {
